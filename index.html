@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SawitMonitor — Monitoring Kebun & Rantai Pasok Sawit</title>
-<meta name="description" content="Dashboard monitoring kebun sawit: peta blok, produksi TBS, harga, armada, dan jejak panen.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='85'>🌴</text></svg>">
+<title>SawitMonitor — Monitoring Harga & Rantai Pasok Minyak Sawit</title>
+<meta name="description" content="Dashboard monitoring minyak sawit: harga CPO, harga minyak goreng per provinsi, stok, ekspor, dan jejak batch.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='85'>🛢️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -27,11 +27,9 @@ tailwind.config = { theme: { extend: {
   .card{background:linear-gradient(180deg,#0d1411 0%,#0a0f0c 100%);border:1px solid #1b2a22;border-radius:16px}
   .card-hover{transition:border-color .2s, transform .2s}
   .card-hover:hover{border-color:#2f4a3b;transform:translateY(-2px)}
-  .grid-bg{background-image:radial-gradient(circle at 1px 1px, rgba(74,222,128,.08) 1px, transparent 0);background-size:22px 22px}
   ::-webkit-scrollbar{width:10px;height:10px}
   ::-webkit-scrollbar-track{background:#0a0f0c}
   ::-webkit-scrollbar-thumb{background:#1f3329;border-radius:8px}
-  ::-webkit-scrollbar-thumb:hover{background:#2c4a39}
   .mono{font-family:'JetBrains Mono',ui-monospace,monospace}
   .nav-btn.active{background:rgba(34,197,94,.12);color:#7ee787;border-color:rgba(34,197,94,.35)}
   .nav-btn.active .dot{background:#4ade80}
@@ -40,7 +38,7 @@ tailwind.config = { theme: { extend: {
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .pulse{animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-  #map{height:520px;border-radius:14px;z-index:0}
+  #map{height:500px;border-radius:14px;z-index:0}
   .leaflet-container{background:#0a0f0c;font-family:'Outfit',sans-serif}
   .leaflet-popup-content-wrapper{background:#0d1411;color:#e6efe9;border:1px solid #2f4a3b;border-radius:12px}
   .leaflet-popup-tip{background:#0d1411;border:1px solid #2f4a3b}
@@ -57,36 +55,36 @@ tailwind.config = { theme: { extend: {
   <!-- SIDEBAR -->
   <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-[248px] shrink-0 bg-ink-900 border-r border-[#16241c] flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-300">
     <div class="px-5 h-16 flex items-center gap-2.5 border-b border-[#16241c]">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-palm-500 to-emerald-700 grid place-items-center text-lg">🌴</div>
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gold-400 to-amber-700 grid place-items-center text-lg">🛢️</div>
       <div class="leading-tight">
         <div class="font-extrabold text-[15px] tracking-tight">SawitMonitor</div>
-        <div class="text-[10px] text-slate-500 mono">v1.0 · LIVE</div>
+        <div class="text-[10px] text-slate-500 mono">minyak sawit · LIVE</div>
       </div>
     </div>
 
     <nav class="p-3 space-y-1 flex-1 overflow-y-auto" aria-label="Navigasi utama">
-      <div class="px-2 pt-2 pb-1 text-[10px] font-bold tracking-widest text-slate-600 uppercase">Operasional</div>
+      <div class="px-2 pt-2 pb-1 text-[10px] font-bold tracking-widest text-slate-600 uppercase">Pasar</div>
       <button data-tab="dashboard" class="nav-btn active w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Dashboard</button>
-      <button data-tab="peta" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Peta Kebun</button>
-      <button data-tab="produksi" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Produksi</button>
-      <button data-tab="harga" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Harga TBS</button>
+      <button data-tab="harga" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Harga Minyak</button>
+      <button data-tab="peta" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Stok &amp; Depot</button>
 
       <div class="px-2 pt-4 pb-1 text-[10px] font-bold tracking-widest text-slate-600 uppercase">Rantai Pasok</div>
-      <button data-tab="armada" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Armada &amp; PKS</button>
-      <button data-tab="petani" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Petani Mitra</button>
+      <button data-tab="produksi" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Produksi &amp; Ekspor</button>
+      <button data-tab="distribusi" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Distribusi</button>
+      <button data-tab="produsen" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Produsen</button>
       <button data-tab="ledger" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Traceability</button>
     </nav>
 
     <div class="p-3 border-t border-[#16241c]">
       <div class="card p-3">
-        <div class="flex items-center gap-2 text-[11px] font-bold text-palm-400"><span class="w-1.5 h-1.5 rounded-full bg-palm-500 pulse"></span> Sensor aktif</div>
-        <div class="mt-1 text-[11px] text-slate-500">142 node IoT · sinkron <span id="sync">2</span> mnt lalu</div>
+        <div class="flex items-center gap-2 text-[11px] font-bold text-palm-400"><span class="w-1.5 h-1.5 rounded-full bg-palm-500 pulse"></span> Data pasar aktif</div>
+        <div class="mt-1 text-[11px] text-slate-500">38 pasar · sinkron <span id="sync">3</span> mnt lalu</div>
       </div>
       <div class="mt-3 flex items-center gap-2.5 px-2">
         <div class="w-8 h-8 rounded-full bg-ink-700 border border-[#2a4034] grid place-items-center text-xs font-bold">AH</div>
         <div class="min-w-0">
           <div class="text-xs font-bold truncate">Ahmad Haris</div>
-          <div class="text-[10px] text-slate-500 truncate">Manajer Operasional</div>
+          <div class="text-[10px] text-slate-500 truncate">Analis Pasar Sawit</div>
         </div>
       </div>
     </div>
@@ -100,8 +98,8 @@ tailwind.config = { theme: { extend: {
       <div class="px-4 sm:px-6 h-16 flex items-center gap-3">
         <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-1 rounded-lg hover:bg-ink-800" aria-label="Buka menu">☰</button>
         <div class="min-w-0">
-          <h1 id="pageTitle" class="font-bold text-[15px] leading-tight truncate">Dashboard Operasional</h1>
-          <p class="text-[11px] text-slate-500 truncate">Kebun sawit · Riau, Jambi, Sumbar, Kalimantan</p>
+          <h1 id="pageTitle" class="font-bold text-[15px] leading-tight truncate">Dashboard Pasar Minyak Sawit</h1>
+          <p class="text-[11px] text-slate-500 truncate">CPO · minyak goreng curah · Minyakita · kemasan premium</p>
         </div>
         <div class="ml-auto flex items-center gap-2">
           <span class="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-palm-400 bg-palm-600/10 border border-palm-600/30 px-2.5 py-1.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-palm-500 pulse"></span> Real-time</span>
@@ -120,24 +118,24 @@ tailwind.config = { theme: { extend: {
           <div class="card p-4 sm:p-5 lg:col-span-2">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <h2 class="font-bold text-sm">Produksi TBS 12 Bulan</h2>
-                <p class="text-[11px] text-slate-500">Total tonase tandan buah segar per bulan</p>
+                <h2 class="font-bold text-sm">Harga CPO 12 Bulan</h2>
+                <p class="text-[11px] text-slate-500">Referensi Rotterdam, USD per ton</p>
               </div>
-              <span class="text-[11px] font-bold text-palm-400 bg-palm-600/10 border border-palm-600/25 px-2 py-1 rounded-lg">+8,4% YoY</span>
+              <span class="text-[11px] font-bold text-palm-400 bg-palm-600/10 border border-palm-600/25 px-2 py-1 rounded-lg">+6,2% YoY</span>
             </div>
-            <div id="chartProduksi" class="mt-4"></div>
+            <div id="chartCPO" class="mt-4"></div>
           </div>
 
           <div class="card p-4 sm:p-5">
-            <h2 class="font-bold text-sm">Status Blok</h2>
-            <p class="text-[11px] text-slate-500">Distribusi status lahan saat ini</p>
+            <h2 class="font-bold text-sm">Kondisi Pasar</h2>
+            <p class="text-[11px] text-slate-500">Sinyal harga &amp; stok hari ini</p>
             <div id="statusList" class="mt-4 space-y-3"></div>
             <div class="mt-5 pt-4 border-t border-[#1b2a22]">
-              <div class="text-[11px] text-slate-500">Curah hujan rata-rata</div>
+              <div class="text-[11px] text-slate-500">Stok minyak goreng nasional</div>
               <div class="mt-1 flex items-end gap-2">
-                <span class="text-2xl font-extrabold">184</span>
-                <span class="text-xs text-slate-500 mb-1">mm/bulan</span>
-                <span class="ml-auto text-[11px] font-bold text-gold-400">Optimal</span>
+                <span class="text-2xl font-extrabold">412</span>
+                <span class="text-xs text-slate-500 mb-1">ribu ton</span>
+                <span class="ml-auto text-[11px] font-bold text-palm-400">Aman</span>
               </div>
             </div>
           </div>
@@ -146,64 +144,18 @@ tailwind.config = { theme: { extend: {
         <div class="grid lg:grid-cols-2 gap-4">
           <div class="card p-4 sm:p-5">
             <div class="flex items-center justify-between">
-              <h2 class="font-bold text-sm">Tugas Panen Hari Ini</h2>
-              <span id="tugasProgress" class="text-[11px] font-bold text-slate-500"></span>
+              <h2 class="font-bold text-sm">Peringatan Harga</h2>
+              <span id="alertCount" class="text-[11px] font-bold text-slate-500"></span>
             </div>
-            <ul id="tugasList" class="mt-3 space-y-2"></ul>
+            <ul id="alertList" class="mt-3 space-y-2"></ul>
           </div>
 
           <div class="card p-4 sm:p-5">
             <div class="flex items-center justify-between">
-              <h2 class="font-bold text-sm">Harga TBS per Provinsi</h2>
+              <h2 class="font-bold text-sm">Harga Minyak Goreng per Wilayah</h2>
               <button onclick="switchTab('harga')" class="text-[11px] font-bold text-palm-400 hover:underline">Detail →</button>
             </div>
             <div id="hargaMini" class="mt-3 space-y-2"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== PETA ===== -->
-      <section id="tab-peta" class="tab space-y-4">
-        <div class="flex flex-wrap items-center gap-2 justify-between">
-          <div class="flex flex-wrap gap-2" id="mapLegend"></div>
-          <div class="flex gap-2">
-            <button onclick="mapFilter(null)" class="text-[11px] font-bold bg-ink-800 border border-[#24382d] hover:border-palm-600/50 px-3 py-1.5 rounded-lg">Semua blok</button>
-            <button onclick="mapFilter('Panen')" class="text-[11px] font-bold bg-ink-800 border border-[#24382d] hover:border-palm-600/50 px-3 py-1.5 rounded-lg">Siap panen</button>
-          </div>
-        </div>
-        <div class="card p-2 sm:p-3">
-          <div id="map" class="w-full"></div>
-        </div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" id="blokGrid"></div>
-      </section>
-
-      <!-- ===== PRODUKSI ===== -->
-      <section id="tab-produksi" class="tab space-y-4">
-        <div class="grid sm:grid-cols-3 gap-3" id="prodStats"></div>
-        <div class="card p-4 sm:p-5">
-          <h2 class="font-bold text-sm">Tonase &amp; Rendemen CPO</h2>
-          <p class="text-[11px] text-slate-500">Perbandingan produksi TBS (ton) dan rendemen CPO (%)</p>
-          <div id="chartRendemen" class="mt-4"></div>
-        </div>
-        <div class="card overflow-hidden">
-          <div class="p-4 sm:p-5 border-b border-[#1b2a22]">
-            <h2 class="font-bold text-sm">Panen Terbaru</h2>
-            <p class="text-[11px] text-slate-500">Catatan panen yang masuk dari kebun mitra</p>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
-                <tr>
-                  <th class="text-left font-bold px-4 py-3">Blok</th>
-                  <th class="text-left font-bold px-4 py-3">Tanggal</th>
-                  <th class="text-right font-bold px-4 py-3">Tonase</th>
-                  <th class="text-right font-bold px-4 py-3">Janjang</th>
-                  <th class="text-right font-bold px-4 py-3">Rendemen</th>
-                  <th class="text-left font-bold px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody id="panenTable" class="divide-y divide-[#16241c]"></tbody>
-            </table>
           </div>
         </div>
       </section>
@@ -212,15 +164,19 @@ tailwind.config = { theme: { extend: {
       <section id="tab-harga" class="tab space-y-4">
         <div class="grid sm:grid-cols-3 gap-3" id="hargaStats"></div>
         <div class="card p-4 sm:p-5">
-          <h2 class="font-bold text-sm">Tren Harga TBS</h2>
-          <p class="text-[11px] text-slate-500">Rata-rata nasional 12 bulan terakhir (Rp/kg)</p>
+          <h2 class="font-bold text-sm">CPO vs Minyak Goreng Curah</h2>
+          <p class="text-[11px] text-slate-500">Indeks 12 bulan terakhir — CPO (USD/t) dan curah (Rp/kg) dinormalisasi</p>
           <div id="chartHarga" class="mt-4"></div>
+          <div class="mt-3 flex flex-wrap gap-4 text-[11px] font-semibold">
+            <span class="flex items-center gap-1.5 text-slate-400"><span class="w-2 h-2 rounded-full bg-gold-400"></span>CPO (indeks)</span>
+            <span class="flex items-center gap-1.5 text-slate-400"><span class="w-2 h-2 rounded-full bg-palm-500"></span>Minyak goreng curah (indeks)</span>
+          </div>
         </div>
         <div class="card overflow-hidden">
           <div class="p-4 sm:p-5 border-b border-[#1b2a22] flex items-center justify-between gap-3">
             <div>
-              <h2 class="font-bold text-sm">Harga per Provinsi</h2>
-              <p class="text-[11px] text-slate-500">Dibandingkan plafon harga Disbun</p>
+              <h2 class="font-bold text-sm">Harga Minyak Goreng per Provinsi</h2>
+              <p class="text-[11px] text-slate-500">Curah, Minyakita, premium — dibanding HET</p>
             </div>
             <span class="text-[10px] font-bold text-slate-500 mono">update 06:00 WIB</span>
           </div>
@@ -229,10 +185,11 @@ tailwind.config = { theme: { extend: {
               <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
                 <tr>
                   <th class="text-left font-bold px-4 py-3">Provinsi</th>
-                  <th class="text-right font-bold px-4 py-3">Harga</th>
-                  <th class="text-right font-bold px-4 py-3">Plafon</th>
+                  <th class="text-right font-bold px-4 py-3">Curah</th>
+                  <th class="text-right font-bold px-4 py-3">Minyakita</th>
+                  <th class="text-right font-bold px-4 py-3">Premium</th>
                   <th class="text-right font-bold px-4 py-3">Δ</th>
-                  <th class="text-left font-bold px-4 py-3 w-40">Posisi</th>
+                  <th class="text-left font-bold px-4 py-3 w-36">vs HET</th>
                 </tr>
               </thead>
               <tbody id="hargaTable" class="divide-y divide-[#16241c]"></tbody>
@@ -241,51 +198,96 @@ tailwind.config = { theme: { extend: {
         </div>
       </section>
 
-      <!-- ===== ARMADA ===== -->
-      <section id="tab-armada" class="tab space-y-4">
-        <div class="grid sm:grid-cols-4 gap-3" id="armadaStats"></div>
+      <!-- ===== STOK & DEPOT ===== -->
+      <section id="tab-peta" class="tab space-y-4">
+        <div class="flex flex-wrap items-center gap-2 justify-between">
+          <div class="flex flex-wrap gap-2" id="mapLegend"></div>
+          <div class="flex gap-2">
+            <button onclick="mapFilter(null)" class="text-[11px] font-bold bg-ink-800 border border-[#24382d] hover:border-palm-600/50 px-3 py-1.5 rounded-lg">Semua depot</button>
+            <button onclick="mapFilter('Defisit')" class="text-[11px] font-bold bg-ink-800 border border-[#24382d] hover:border-palm-600/50 px-3 py-1.5 rounded-lg">Stok defisit</button>
+          </div>
+        </div>
+        <div class="card p-2 sm:p-3">
+          <div id="map" class="w-full"></div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" id="depotGrid"></div>
+      </section>
+
+      <!-- ===== PRODUKSI & EKSPOR ===== -->
+      <section id="tab-produksi" class="tab space-y-4">
+        <div class="grid sm:grid-cols-3 gap-3" id="prodStats"></div>
+        <div class="card p-4 sm:p-5">
+          <h2 class="font-bold text-sm">Produksi CPO &amp; Minyak Goreng</h2>
+          <p class="text-[11px] text-slate-500">Ribu ton per bulan</p>
+          <div id="chartProduksi" class="mt-4"></div>
+        </div>
         <div class="card overflow-hidden">
           <div class="p-4 sm:p-5 border-b border-[#1b2a22]">
-            <h2 class="font-bold text-sm">Armada Angkutan TBS</h2>
-            <p class="text-[11px] text-slate-500">Posisi &amp; muatan truk menuju PKS</p>
+            <h2 class="font-bold text-sm">Ekspor Bulan Ini</h2>
+            <p class="text-[11px] text-slate-500">Tujuan utama &amp; nilai devisa</p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
                 <tr>
-                  <th class="text-left font-bold px-4 py-3">Truk</th>
+                  <th class="text-left font-bold px-4 py-3">Negara tujuan</th>
+                  <th class="text-left font-bold px-4 py-3">Produk</th>
+                  <th class="text-right font-bold px-4 py-3">Volume</th>
+                  <th class="text-right font-bold px-4 py-3">Nilai</th>
+                  <th class="text-left font-bold px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="eksporTable" class="divide-y divide-[#16241c]"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== DISTRIBUSI ===== -->
+      <section id="tab-distribusi" class="tab space-y-4">
+        <div class="grid sm:grid-cols-4 gap-3" id="distStats"></div>
+        <div class="card overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-[#1b2a22]">
+            <h2 class="font-bold text-sm">Pengiriman Minyak Goreng</h2>
+            <p class="text-[11px] text-slate-500">Truk tangki &amp; kontainer menuju depot</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
+                <tr>
+                  <th class="text-left font-bold px-4 py-3">Unit</th>
                   <th class="text-left font-bold px-4 py-3">Rute</th>
                   <th class="text-right font-bold px-4 py-3">Muatan</th>
                   <th class="text-right font-bold px-4 py-3">ETA</th>
                   <th class="text-left font-bold px-4 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody id="armadaTable" class="divide-y divide-[#16241c]"></tbody>
+              <tbody id="distTable" class="divide-y divide-[#16241c]"></tbody>
             </table>
           </div>
         </div>
-        <div class="grid sm:grid-cols-2 gap-3" id="pksGrid"></div>
+        <div class="grid sm:grid-cols-2 gap-3" id="refineryGrid"></div>
       </section>
 
-      <!-- ===== PETANI ===== -->
-      <section id="tab-petani" class="tab space-y-4">
+      <!-- ===== PRODUSEN ===== -->
+      <section id="tab-produsen" class="tab space-y-4">
         <div class="card p-4 sm:p-5">
           <div class="flex flex-wrap items-center gap-2 justify-between">
             <div>
-              <h2 class="font-bold text-sm">Petani Mitra</h2>
-              <p class="text-[11px] text-slate-500">Plasma &amp; swadaya terverifikasi</p>
+              <h2 class="font-bold text-sm">Produsen &amp; Merek Minyak Goreng</h2>
+              <p class="text-[11px] text-slate-500">Refinery terdaftar beserta merek kemasan</p>
             </div>
-            <input id="cariPetani" type="search" placeholder="Cari nama / koperasi…" class="text-xs bg-ink-850 border border-[#24382d] rounded-lg px-3 py-2 outline-none focus:border-palm-600 w-full sm:w-56">
+            <input id="cariProdusen" type="search" placeholder="Cari produsen / merek…" class="text-xs bg-ink-850 border border-[#24382d] rounded-lg px-3 py-2 outline-none focus:border-palm-600 w-full sm:w-56">
           </div>
         </div>
-        <div id="petaniGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        <div id="produsenGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       </section>
 
       <!-- ===== LEDGER ===== -->
       <section id="tab-ledger" class="tab space-y-4">
         <div class="card p-4 sm:p-5">
-          <h2 class="font-bold text-sm">Jejak Panen (Traceability)</h2>
-          <p class="text-[11px] text-slate-500">Setiap penjualan TBS dicatat sebagai blok hash — bisa diaudit sampai kebun asal.</p>
+          <h2 class="font-bold text-sm">Jejak Batch Minyak Sawit</h2>
+          <p class="text-[11px] text-slate-500">CPO → refinery → kemasan → distributor. Setiap tahap tercatat sebagai blok hash.</p>
           <div id="chain" class="mt-4 grid sm:grid-cols-3 gap-3"></div>
         </div>
         <div class="card overflow-hidden">
@@ -295,7 +297,7 @@ tailwind.config = { theme: { extend: {
                 <tr>
                   <th class="text-left font-bold px-4 py-3">Block hash</th>
                   <th class="text-left font-bold px-4 py-3">Event</th>
-                  <th class="text-left font-bold px-4 py-3">Blok / entitas</th>
+                  <th class="text-left font-bold px-4 py-3">Batch / entitas</th>
                   <th class="text-left font-bold px-4 py-3">Node</th>
                   <th class="text-left font-bold px-4 py-3">Waktu</th>
                   <th class="text-left font-bold px-4 py-3">Status</th>
@@ -308,7 +310,7 @@ tailwind.config = { theme: { extend: {
       </section>
 
       <footer class="pt-2 pb-6 text-[11px] text-slate-600 flex flex-col sm:flex-row justify-between gap-1">
-        <span>SawitMonitor — demo dashboard monitoring sawit.</span>
+        <span>SawitMonitor — demo dashboard minyak sawit.</span>
         <span>Data ilustratif · tidak untuk keputusan bisnis.</span>
       </footer>
     </div>
@@ -319,113 +321,114 @@ tailwind.config = { theme: { extend: {
 <script>
 const rp = n => "Rp" + n.toLocaleString("id-ID");
 const num = n => n.toLocaleString("id-ID");
+const usd = n => "US$" + n.toLocaleString("en-US");
 
-const BLOK = [
-  {id:"BKS-01", nama:"Sungai Apit", kab:"Siak, Riau", lat:0.78, lng:102.15, luas:1240, status:"Panen", umur:8, produksi:18.4, petani:"Koperasi Maju Tani"},
-  {id:"BKS-02", nama:"Tapung Hilir", kab:"Kampar, Riau", lat:0.95, lng:101.28, luas:980, status:"Produktif", umur:11, produksi:16.2, petani:"KUD Tapung Jaya"},
-  {id:"BKS-03", nama:"Batang Cenaku", kab:"Indragiri Hulu, Riau", lat:-0.62, lng:102.18, luas:1560, status:"Produktif", umur:9, produksi:22.8, petani:"Koperasi Cenaku"},
-  {id:"BKS-04", nama:"Pangkalan Lesung", kab:"Pelalawan, Riau", lat:0.12, lng:102.08, luas:740, status:"Perawatan", umur:5, produksi:6.1, petani:"Kelompok Tani Lesung"},
-  {id:"BKS-05", nama:"Muara Bungo", kab:"Bungo, Jambi", lat:-1.47, lng:102.09, luas:1120, status:"Panen", umur:7, produksi:15.9, petani:"KUD Bungo Sejahtera"},
-  {id:"BKS-06", nama:"Tebo Ulu", kab:"Tebo, Jambi", lat:-1.32, lng:102.35, luas:860, status:"Produktif", umur:13, produksi:13.4, petani:"Koperasi Tebo Mandiri"},
-  {id:"BKS-07", nama:"Kinali", kab:"Pasaman Barat, Sumbar", lat:0.02, lng:99.94, luas:640, status:"Replanting", umur:3, produksi:0, petani:"KUD Kinali"},
-  {id:"BKS-08", nama:"Sungai Rumbai", kab:"Dharmasraya, Sumbar", lat:-1.06, lng:101.62, luas:910, status:"Produktif", umur:10, produksi:12.7, petani:"Koperasi Rumbai"},
-  {id:"BKS-09", nama:"Sanggau", kab:"Sanggau, Kalbar", lat:0.12, lng:110.6, luas:1480, status:"Panen", umur:6, produksi:19.6, petani:"KUD Sanggau Lestari"},
-  {id:"BKS-10", nama:"Kotawaringin Timur", kab:"Kotim, Kalteng", lat:-2.4, lng:112.9, luas:2050, status:"Produktif", umur:12, produksi:27.3, petani:"Koperasi Kotim Jaya"},
-  {id:"BKS-11", nama:"Seruyan Hilir", kab:"Seruyan, Kalteng", lat:-3.2, lng:112.3, luas:1320, status:"Perawatan", umur:4, produksi:8.9, petani:"Kelompok Seruyan"},
-  {id:"BKS-12", nama:"Long Kali", kab:"Paser, Kaltim", lat:-1.1, lng:116.4, luas:1120, status:"Produktif", umur:9, produksi:15.2, petani:"KUD Paser Makmur"},
-];
+/* ===== DATA ===== */
 
-const PRODUKSI = [3120,2980,3410,3560,3290,3105,3680,3840,3720,3950,4010,4180];
+// Harga CPO Rotterdam (USD/ton)
+const CPO = [1085,1102,1140,1178,1155,1120,1168,1215,1190,1232,1265,1290];
 const BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-const RENDEMEN = [21.8,21.4,22.1,22.4,22.0,21.6,22.6,22.9,22.7,23.1,23.0,23.4];
-const HARGA_TREN = [2180,2210,2260,2305,2280,2250,2340,2390,2360,2420,2470,2510];
+
+// Minyak goreng curah nasional (Rp/kg) — tren
+const CURAH = [15600,15750,16100,16400,16250,15900,16350,16800,16700,17050,17400,17650];
+
+// Produksi CPO & minyak goreng (ribu ton)
+const PROD_CPO = [4120,3980,4380,4460,4310,4150,4520,4680,4590,4720,4810,4890];
+const PROD_MG  = [1480,1420,1560,1600,1545,1490,1620,1680,1650,1700,1730,1760];
 
 const HARGA = [
-  {prov:"Riau", harga:2540, plafon:2680, delta:1.6},
-  {prov:"Jambi", harga:2490, plafon:2620, delta:0.8},
-  {prov:"Sumatera Barat", harga:2610, plafon:2700, delta:2.4},
-  {prov:"Sumatera Utara", harga:2450, plafon:2600, delta:-0.6},
-  {prov:"Kalimantan Barat", harga:2380, plafon:2550, delta:1.1},
-  {prov:"Kalimantan Tengah", harga:2320, plafon:2520, delta:-1.2},
-  {prov:"Kalimantan Timur", harga:2410, plafon:2580, delta:0.4},
+  {prov:"DKI Jakarta",   curah:17800, minyakita:15700, premium:20500, het:15700, delta:1.2},
+  {prov:"Jawa Barat",    curah:17500, minyakita:15700, premium:19900, het:15700, delta:0.6},
+  {prov:"Jawa Tengah",   curah:17200, minyakita:15700, premium:19500, het:15700, delta:-0.4},
+  {prov:"Jawa Timur",    curah:17350, minyakita:15700, premium:19700, het:15700, delta:0.9},
+  {prov:"Sumatera Utara",curah:18100, minyakita:16400, premium:21000, het:15700, delta:2.8},
+  {prov:"Riau",          curah:16900, minyakita:15700, premium:19200, het:15700, delta:-1.1},
+  {prov:"Kalimantan Barat", curah:18300, minyakita:16600, premium:21400, het:15700, delta:3.4},
+  {prov:"Papua",         curah:21400, minyakita:18900, premium:24800, het:15700, delta:4.6},
+  {prov:"Maluku",        curah:20100, minyakita:17800, premium:23200, het:15700, delta:3.1},
 ];
 
-const PANEN = [
-  {blok:"BKS-09 · Sanggau", tgl:"23 Nov", ton:19.6, janjang:1240, rend:23.1, status:"Terverifikasi"},
-  {blok:"BKS-01 · Sungai Apit", tgl:"23 Nov", ton:18.4, janjang:1180, rend:22.8, status:"Terverifikasi"},
-  {blok:"BKS-05 · Muara Bungo", tgl:"22 Nov", ton:15.9, janjang:1020, rend:22.4, status:"Menunggu audit"},
-  {blok:"BKS-10 · Kotim", tgl:"22 Nov", ton:27.3, janjang:1690, rend:23.4, status:"Terverifikasi"},
-  {blok:"BKS-03 · Batang Cenaku", tgl:"21 Nov", ton:22.8, janjang:1430, rend:22.9, status:"Terverifikasi"},
-  {blok:"BKS-11 · Seruyan", tgl:"21 Nov", ton:8.9, janjang:610, rend:21.7, status:"Perlu cek"},
+const DEPOT = [
+  {id:"DPT-01", nama:"Depot Tanjung Priok", kota:"Jakarta Utara", lat:-6.10, lng:106.88, stok:42, kapasitas:60, status:"Normal"},
+  {id:"DPT-02", nama:"Depot Cikarang", kota:"Bekasi", lat:-6.28, lng:107.15, stok:31, kapasitas:45, status:"Normal"},
+  {id:"DPT-03", nama:"Depot Belawan", kota:"Medan", lat:3.78, lng:98.69, stok:12, kapasitas:40, status:"Defisit"},
+  {id:"DPT-04", nama:"Depot Dumai", kota:"Dumai, Riau", lat:1.68, lng:101.45, stok:48, kapasitas:55, status:"Normal"},
+  {id:"DPT-05", nama:"Depot Tanjung Perak", kota:"Surabaya", lat:-7.20, lng:112.73, stok:36, kapasitas:50, status:"Normal"},
+  {id:"DPT-06", nama:"Depot Pontianak", kota:"Pontianak", lat:-0.03, lng:109.33, stok:9, kapasitas:35, status:"Defisit"},
+  {id:"DPT-07", nama:"Depot Banjarmasin", kota:"Banjarmasin", lat:-3.32, lng:114.59, stok:22, kapasitas:30, status:"Normal"},
+  {id:"DPT-08", nama:"Depot Makassar", kota:"Makassar", lat:-5.13, lng:119.42, stok:14, kapasitas:38, status:"Defisit"},
+  {id:"DPT-09", nama:"Depot Jayapura", kota:"Jayapura", lat:-2.53, lng:140.72, stok:6, kapasitas:20, status:"Defisit"},
+  {id:"DPT-10", nama:"Depot Ambon", kota:"Ambon", lat:-3.70, lng:128.18, stok:11, kapasitas:25, status:"Normal"},
 ];
 
-const TUGAS = [
-  {t:"Verifikasi timbangan BKS-01", d:"Pukul 09:00 · PKS Siak", done:true},
-  {t:"Audit rendemen BKS-10", d:"Pukul 11:00 · Lab Kotim", done:true},
-  {t:"Jadwalkan panen BKS-04", d:"Pukul 13:30 · Pelalawan", done:false},
-  {t:"Cek sensor kelembapan BKS-07", d:"Pukul 15:00 · Kinali", done:false},
-  {t:"Setor laporan TBS ke Disbun", d:"Pukul 16:30 · Online", done:false},
+const ALERT = [
+  {t:"Harga curah Papua 36% di atas HET", d:"Pantau distribusi ke depot Jayapura", lvl:"Tinggi", done:false},
+  {t:"Stok Depot Belawan di bawah 30%", d:"Ajukan penambahan pasokan dari Dumai", lvl:"Tinggi", done:false},
+  {t:"Selisih harga Minyakita Kalbar", d:"Verifikasi laporan pasar Pontianak", lvl:"Sedang", done:true},
+  {t:"Ekspor CPO ke India naik 12%", d:"Tidak perlu tindakan", lvl:"Info", done:true},
 ];
 
-const ARMADA = [
-  {truk:"BM 8841 SA", rute:"BKS-01 → PKS Siak", muatan:18.4, eta:"12 mnt", status:"Jalan"},
-  {truk:"BH 7712 KJ", rute:"BKS-05 → PKS Bungo", muatan:15.9, eta:"28 mnt", status:"Jalan"},
-  {truk:"KB 2290 PA", rute:"BKS-09 → PKS Sanggau", muatan:19.6, eta:"Tiba", status:"Bongkar"},
-  {truk:"KH 5567 TG", rute:"BKS-10 → PKS Kotim", muatan:27.3, eta:"1 j 05 m", status:"Jalan"},
-  {truk:"BM 3310 RI", rute:"BKS-02 → PKS Siak", muatan:0, eta:"—", status:"Perawatan"},
-  {truk:"DA 8821 JM", rute:"BKS-06 → PKS Tebo", muatan:13.4, eta:"Tiba", status:"Bongkar"},
+const EKSPOR = [
+  {negara:"India", produk:"CPO", vol:184000, nilai:198, st:"Dalam perjalanan"},
+  {negara:"Tiongkok", produk:"CPO & olein", vol:142000, nilai:156, st:"Terkirim"},
+  {negara:"Belanda", produk:"Minyak goreng kemasan", vol:38000, nilai:52, st:"Terkirim"},
+  {negara:"Mesir", produk:"CPO", vol:64000, nilai:68, st:"Bongkar muat"},
+  {negara:"Filipina", produk:"Olein", vol:29000, nilai:31, st:"Terkirim"},
 ];
 
-const PKS = [
-  {nama:"PKS Siak", kapasitas:60, terpakai:48, lokasi:"Siak, Riau"},
-  {nama:"PKS Bungo", kapasitas:45, terpakai:31, lokasi:"Bungo, Jambi"},
-  {nama:"PKS Sanggau", kapasitas:40, terpakai:36, lokasi:"Sanggau, Kalbar"},
-  {nama:"PKS Kotim", kapasitas:80, terpakai:62, lokasi:"Kotim, Kalteng"},
+const DIST = [
+  {unit:"B 9021 TBS", rute:"Refinery Dumai → Depot Belawan", muatan:24, eta:"1 j 20 m", st:"Jalan"},
+  {unit:"B 7712 TRK", rute:"Refinery Cikarang → Depot Priok", muatan:18, eta:"35 mnt", st:"Jalan"},
+  {unit:"KT 2290 TNK", rute:"Refinery Balikpapan → Depot Banjarmasin", muatan:32, eta:"Tiba", st:"Bongkar"},
+  {unit:"DD 5567 TBK", rute:"Refinery Makassar → Depot Makassar", muatan:15, eta:"Tiba", st:"Bongkar"},
+  {unit:"B 3310 TRK", rute:"Depot Priok → Distributor Bandung", muatan:9, eta:"2 j 05 m", st:"Jalan"},
+  {unit:"PA 8821 TNK", rute:"Refinery Surabaya → Depot Jayapura", muatan:28, eta:"6 hari", st:"Jalan"},
 ];
 
-const PETANI = [
-  {nama:"Sutrisno", kop:"Koperasi Maju Tani", blok:"BKS-01", luas:4.2, status:"Plasma"},
-  {nama:"Rosmawati", kop:"KUD Tapung Jaya", blok:"BKS-02", luas:2.8, status:"Plasma"},
-  {nama:"Bambang Prasetyo", kop:"Koperasi Cenaku", blok:"BKS-03", luas:6.5, status:"Swadaya"},
-  {nama:"Yusuf Hamid", kop:"Kelompok Tani Lesung", blok:"BKS-04", luas:1.9, status:"Swadaya"},
-  {nama:"Aisyah Nur", kop:"KUD Bungo Sejahtera", blok:"BKS-05", luas:3.4, status:"Plasma"},
-  {nama:"Joko Santoso", kop:"Koperasi Tebo Mandiri", blok:"BKS-06", luas:5.1, status:"Plasma"},
-  {nama:"Mariana", kop:"KUD Sanggau Lestari", blok:"BKS-09", luas:7.3, status:"Swadaya"},
-  {nama:"Hendra Wijaya", kop:"Koperasi Kotim Jaya", blok:"BKS-10", luas:9.8, status:"Plasma"},
-  {nama:"Siti Rahma", kop:"Kelompok Seruyan", blok:"BKS-11", luas:3.0, status:"Swadaya"},
+const REFINERY = [
+  {nama:"Refinery Dumai", kapasitas:4500, terpakai:3860, lokasi:"Dumai, Riau"},
+  {nama:"Refinery Cikarang", kapasitas:3200, terpakai:2740, lokasi:"Bekasi, Jabar"},
+  {nama:"Refinery Balikpapan", kapasitas:2800, terpakai:1910, lokasi:"Balikpapan, Kaltim"},
+  {nama:"Refinery Makassar", kapasitas:1800, terpakai:1520, lokasi:"Makassar, Sulsel"},
+];
+
+const PRODUSEN = [
+  {nama:"PT Sinar Mas Agro", merek:"Filma, Kunci Mas", kapasitas:5200, sertifikat:"ISPO", prov:"Riau"},
+  {nama:"PT Astra Agro Lestari", merek:"Astra, Sawit Mas", kapasitas:4100, sertifikat:"ISPO", prov:"Kalteng"},
+  {nama:"PT Salim Ivomas Pratama", merek:"Bimoli, Delima", kapasitas:3800, sertifikat:"ISPO", prov:"Jabar"},
+  {nama:"PT Wilmar Nabati", merek:"Sania, Fortune", kapasitas:3500, sertifikat:"ISPO", prov:"Sumut"},
+  {nama:"PT Musim Mas", merek:"Minyak Kita, Mas", kapasitas:2900, sertifikat:"ISPO", prov:"Sumut"},
+  {nama:"Koperasi Sawit Rakyat", merek:"Minyak Rakyat", kapasitas:420, sertifikat:"ISPO", prov:"Jambi"},
 ];
 
 const LEDGER = [
-  {hash:"0xSW-4f81a2", ev:"TBS_SETTLED", ent:"BKS-09 · Sanggau", node:"PKS Sanggau", t:"2 mnt lalu", st:"COMMITTED"},
-  {hash:"0xSW-9b2e77", ev:"WEIGH_VERIFIED", ent:"BKS-01 · Sungai Apit", node:"PKS Siak", t:"18 mnt lalu", st:"COMMITTED"},
-  {hash:"0xSW-1a7d33", ev:"HARVEST_LOGGED", ent:"BKS-10 · Kotim", node:"PKS Kotim", t:"46 mnt lalu", st:"COMMITTED"},
-  {hash:"0xSW-7c02be", ev:"QUALITY_AUDIT", ent:"BKS-05 · Muara Bungo", node:"Lab Bungo", t:"2 j lalu", st:"PENDING"},
-  {hash:"0xSW-3d91ff", ev:"FLEET_DISPATCH", ent:"BM 8841 SA", node:"PKS Siak", t:"3 j lalu", st:"COMMITTED"},
-  {hash:"0xSW-8e44c1", ev:"PRICE_ANCHOR", ent:"Riau · Rp2.540/kg", node:"Disbun", t:"5 j lalu", st:"COMMITTED"},
+  {hash:"0xMS-4f81a2", ev:"BATCH_SEALED", ent:"BTH-2601 · 24.000 L", node:"Refinery Dumai", t:"2 mnt lalu", st:"COMMITTED"},
+  {hash:"0xMS-9b2e77", ev:"QUALITY_TEST", ent:"BTH-2601 · FFA 0,08%", node:"Lab Dumai", t:"18 mnt lalu", st:"COMMITTED"},
+  {hash:"0xMS-1a7d33", ev:"CPO_INTAKE", ent:"CPO-1184 · 96 ton", node:"Refinery Cikarang", t:"46 mnt lalu", st:"COMMITTED"},
+  {hash:"0xMS-7c02be", ev:"DISTRIBUTOR_OUT", ent:"DPT-03 · 12.000 L", node:"Depot Belawan", t:"2 j lalu", st:"PENDING"},
+  {hash:"0xMS-3d91ff", ev:"PRICE_ANCHOR", ent:"Curah Rp17.650/kg", node:"Bapanas", t:"3 j lalu", st:"COMMITTED"},
+  {hash:"0xMS-8e44c1", ev:"EXPORT_CLEARANCE", ent:"PEB-2291 · India", node:"Bea Cukai", t:"5 j lalu", st:"COMMITTED"},
 ];
 
-/* ---------- helpers ---------- */
+/* ===== HELPERS ===== */
 const $ = id => document.getElementById(id);
 const badge = (txt, cls) => `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${cls}">${txt}</span>`;
 const ST = {
-  Panen:      ["text-gold-400 border-gold-500/40 bg-gold-500/10", "Siap panen"],
-  Produktif:  ["text-palm-400 border-palm-600/40 bg-palm-600/10", "Produktif"],
-  Perawatan:  ["text-sky-300 border-sky-500/40 bg-sky-500/10", "Perawatan"],
-  Replanting: ["text-slate-300 border-slate-500/40 bg-slate-500/10", "Replanting"],
-  Jalan:      ["text-palm-400 border-palm-600/40 bg-palm-600/10", "Jalan"],
-  Bongkar:    ["text-gold-400 border-gold-500/40 bg-gold-500/10", "Bongkar"],
+  Normal:   ["text-palm-400 border-palm-600/40 bg-palm-600/10", "Normal"],
+  Defisit:  ["text-red-300 border-red-500/40 bg-red-500/10", "Defisit"],
+  Jalan:    ["text-palm-400 border-palm-600/40 bg-palm-600/10", "Jalan"],
+  Bongkar:  ["text-gold-400 border-gold-500/40 bg-gold-500/10", "Bongkar"],
 };
 const statBadge = s => badge(s, ST[s]?.[0] || "text-slate-300 border-slate-600 bg-slate-700/20");
 
-/* ---------- KPI ---------- */
-const totalLuas = BLOK.reduce((a,b)=>a+b.luas,0);
-const totalProduksi = PRODUKSI.at(-1);
-const avgHarga = Math.round(HARGA.reduce((a,b)=>a+b.harga,0)/HARGA.length);
+/* ===== KPI ===== */
+const cpoNow = CPO.at(-1);
+const curahNow = CURAH.at(-1);
 $("kpis").innerHTML = [
-  {l:"Total luas kebun", v:num(totalLuas), u:"ha", d:"12 blok · 4 provinsi", c:"text-palm-400"},
-  {l:"Produksi TBS", v:num(totalProduksi), u:"ton/bln", d:"+8,4% vs tahun lalu", c:"text-gold-400"},
-  {l:"Harga TBS rata-rata", v:rp(avgHarga), u:"/kg", d:"+2,1% minggu ini", c:"text-palm-400"},
-  {l:"Petani mitra", v:"1.284", u:"orang", d:"98% terverifikasi KTP", c:"text-sky-300"},
+  {l:"Harga CPO", v:usd(cpoNow), u:"/ton", d:"+2,0% bulan ini", c:"text-gold-400"},
+  {l:"Minyak goreng curah", v:rp(curahNow), u:"/kg", d:"+1,4% bulan ini", c:"text-palm-400"},
+  {l:"Stok nasional", v:"412", u:"ribu ton", d:"cukup 3,2 bulan", c:"text-palm-400"},
+  {l:"Ekspor bulan ini", v:"457", u:"ribu ton", d:"US$505 juta", c:"text-sky-300"},
 ].map(k=>`
   <div class="card card-hover p-4">
     <div class="text-[11px] font-semibold text-slate-500">${k.l}</div>
@@ -436,178 +439,174 @@ $("kpis").innerHTML = [
     <div class="mt-1 text-[10px] text-slate-500">${k.d}</div>
   </div>`).join("");
 
-/* ---------- charts (inline SVG) ---------- */
-function areaChart(data, {w=640, h=180, color="#4ade80", labels=true, fmt=v=>num(v)}={}){
-  const pad = {t:14,r:8,b:labels?22:8,l:8};
-  const max = Math.max(...data)*1.12, min = Math.min(...data)*0.9;
+/* ===== CHARTS ===== */
+function lineChart(series, {w=640, h=180, labels=true}={}){
+  const all = series.flatMap(s=>s.data);
+  const pad = {t:16,r:8,b:labels?22:8,l:8};
+  const max = Math.max(...all)*1.08, min = Math.min(...all)*0.92;
   const iw = w-pad.l-pad.r, ih = h-pad.t-pad.b;
-  const x = i => pad.l + (iw * i/(data.length-1));
+  const n = series[0].data.length;
+  const x = i => pad.l + (iw * i/(n-1));
   const y = v => pad.t + ih - ((v-min)/(max-min||1))*ih;
-  const pts = data.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const grid = [0,.25,.5,.75,1].map(f=>{
-    const yy = pad.t + ih*f;
-    return `<line x1="${pad.l}" y1="${yy}" x2="${w-pad.r}" y2="${yy}" stroke="#1b2a22" stroke-width="1"/>`;
-  }).join("");
+  const grid = [0,.25,.5,.75,1].map(f=>`<line x1="${pad.l}" y1="${pad.t+ih*f}" x2="${w-pad.r}" y2="${pad.t+ih*f}" stroke="#1b2a22"/>`).join("");
   const lbl = labels ? BULAN.map((m,i)=>`<text x="${x(i)}" y="${h-4}" fill="#5b6f63" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">${m}</text>`).join("") : "";
-  const dots = data.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="${color}"/>`).join("");
-  const peak = data.indexOf(Math.max(...data));
-  return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto" role="img" aria-label="grafik tren">
-    <defs><linearGradient id="g${color.replace('#','')}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${color}" stop-opacity=".28"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>
-    </linearGradient></defs>
-    ${grid}
-    <polygon points="${pad.l},${pad.t+ih} ${pts} ${w-pad.r},${pad.t+ih}" fill="url(#g${color.replace('#','')})"/>
-    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-    ${dots}
-    <circle cx="${x(peak)}" cy="${y(data[peak])}" r="4" fill="none" stroke="${color}" stroke-width="1.5" opacity=".6"/>
-    <text x="${x(peak)}" y="${y(data[peak])-9}" fill="${color}" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">${fmt(data[peak])}</text>
-    ${lbl}
-  </svg>`;
+  const paths = series.map(s=>{
+    const pts = s.data.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${s.data.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.2" fill="${s.color}"/>`).join("")}`;
+  }).join("");
+  return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto" role="img" aria-label="grafik tren">${grid}${paths}${lbl}</svg>`;
 }
 
-function barChart(data, {w=640,h=180,color="#f59e0b"}={}){
+function barChart(a, b, {w=640,h=180}={}){
   const pad={t:16,r:8,b:22,l:8}, iw=w-pad.l-pad.r, ih=h-pad.t-pad.b;
-  const max = Math.max(...data)*1.1;
-  const bw = iw/data.length*0.55, gap = iw/data.length;
+  const max = Math.max(...a,...b)*1.1;
+  const gap = iw/a.length, bw = gap*0.28;
   return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto" role="img" aria-label="grafik produksi">
     ${[0,.25,.5,.75,1].map(f=>`<line x1="${pad.l}" y1="${pad.t+ih*f}" x2="${w-pad.r}" y2="${pad.t+ih*f}" stroke="#1b2a22"/>`).join("")}
-    ${data.map((v,i)=>{
-      const bh=(v/max)*ih, xx=pad.l+gap*i+(gap-bw)/2, yy=pad.t+ih-bh;
-      return `<rect x="${xx}" y="${yy}" width="${bw}" height="${bh}" rx="3" fill="${i===data.length-1?color:'#2f4a3b'}"/>
-        ${i%2===0?`<text x="${xx+bw/2}" y="${h-4}" fill="#5b6f63" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">${BULAN[i]}</text>`:''}`;
+    ${a.map((v,i)=>{
+      const h1=(v/max)*ih, h2=(b[i]/max)*ih, x1=pad.l+gap*i+(gap-bw*2-2)/2;
+      return `<rect x="${x1}" y="${pad.t+ih-h1}" width="${bw}" height="${h1}" rx="2" fill="#f59e0b"/>
+        <rect x="${x1+bw+2}" y="${pad.t+ih-h2}" width="${bw}" height="${h2}" rx="2" fill="#4ade80"/>
+        ${i%2===0?`<text x="${x1+bw}" y="${h-4}" fill="#5b6f63" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">${BULAN[i]}</text>`:''}`;
     }).join("")}
   </svg>`;
 }
 
-$("chartProduksi").innerHTML = areaChart(PRODUKSI, {color:"#4ade80"});
-$("chartHarga").innerHTML = areaChart(HARGA_TREN, {color:"#fbbf24", fmt:v=>"Rp"+num(v)});
-$("chartRendemen").innerHTML = barChart(PRODUKSI, {color:"#fbbf24"});
+$("chartCPO").innerHTML = lineChart([{data:CPO, color:"#fbbf24"}]);
+$("chartProduksi").innerHTML = barChart(PROD_CPO, PROD_MG);
+$("chartHarga").innerHTML = lineChart([
+  {data:CPO.map(v=>v/CPO[0]*100), color:"#fbbf24"},
+  {data:CURAH.map(v=>v/CURAH[0]*100), color:"#4ade80"},
+]);
 
-/* ---------- status blok ---------- */
-const counts = {};
-BLOK.forEach(b=>counts[b.status]=(counts[b.status]||0)+1);
-$("statusList").innerHTML = Object.entries(counts).map(([k,v])=>{
-  const pct = Math.round(v/BLOK.length*100);
-  const col = {Panen:"bg-gold-500",Produktif:"bg-palm-500",Perawatan:"bg-sky-400",Replanting:"bg-slate-500"}[k];
-  return `<div>
-    <div class="flex items-center justify-between text-[11px] font-semibold"><span class="text-slate-300">${ST[k]?.[1]||k}</span><span class="text-slate-500 mono">${v} blok · ${pct}%</span></div>
-    <div class="mt-1 h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${col} rounded-full" style="width:${pct}%"></div></div>
-  </div>`;
-}).join("");
+/* ===== KONDISI PASAR ===== */
+const overHET = HARGA.filter(h=>h.curah>h.het).length;
+$("statusList").innerHTML = [
+  {k:"Harga curah vs HET", v:`${overHET} provinsi di atas`, pct:Math.round(overHET/HARGA.length*100), col:"bg-gold-500"},
+  {k:"Depot stok normal", v:`${DEPOT.filter(d=>d.status==="Normal").length}/${DEPOT.length} depot`, pct:Math.round(DEPOT.filter(d=>d.status==="Normal").length/DEPOT.length*100), col:"bg-palm-500"},
+  {k:"Utilisasi refinery", v:"82% kapasitas", pct:82, col:"bg-sky-400"},
+  {k:"Ekspor vs kuota", v:"71% terpenuhi", pct:71, col:"bg-palm-500"},
+].map(s=>`
+  <div>
+    <div class="flex items-center justify-between text-[11px] font-semibold"><span class="text-slate-300">${s.k}</span><span class="text-slate-500 mono">${s.v}</span></div>
+    <div class="mt-1 h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${s.col} rounded-full" style="width:${s.pct}%"></div></div>
+  </div>`).join("");
 
-/* ---------- tugas ---------- */
-$("tugasList").innerHTML = TUGAS.map((t,i)=>`
+/* ===== ALERT ===== */
+const LVL = {Tinggi:"text-red-300 border-red-500/40 bg-red-500/10", Sedang:"text-gold-400 border-gold-500/40 bg-gold-500/10", Info:"text-sky-300 border-sky-500/40 bg-sky-500/10"};
+$("alertList").innerHTML = ALERT.map(a=>`
   <li class="flex items-start gap-2.5">
-    <span class="mt-0.5 w-4 h-4 rounded border ${t.done?'bg-palm-600 border-palm-600 text-ink-950':'border-[#2a4034]'} grid place-items-center text-[9px] font-bold">${t.done?'✓':''}</span>
-    <span class="min-w-0">
-      <span class="block text-xs font-semibold ${t.done?'text-slate-500 line-through':'text-slate-200'}">${t.t}</span>
-      <span class="block text-[10px] text-slate-500">${t.d}</span>
+    <span class="mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${a.done?'bg-slate-600':'bg-gold-500 pulse'}"></span>
+    <span class="min-w-0 flex-1">
+      <span class="block text-xs font-semibold ${a.done?'text-slate-500':'text-slate-200'}">${a.t}</span>
+      <span class="block text-[10px] text-slate-500">${a.d}</span>
     </span>
+    ${badge(a.lvl, LVL[a.lvl])}
   </li>`).join("");
-$("tugasProgress").textContent = TUGAS.filter(t=>t.done).length + " / " + TUGAS.length + " selesai";
+$("alertCount").textContent = ALERT.filter(a=>!a.done).length + " perlu tindakan";
 
-/* ---------- harga mini + tabel ---------- */
+/* ===== HARGA ===== */
 $("hargaMini").innerHTML = HARGA.slice(0,4).map(h=>`
   <div class="flex items-center justify-between text-xs">
     <span class="text-slate-300">${h.prov}</span>
     <span class="flex items-center gap-2">
-      <span class="mono font-bold">${rp(h.harga)}</span>
-      <span class="text-[10px] font-bold ${h.delta>=0?'text-palm-400':'text-red-400'}">${h.delta>=0?'▲':'▼'} ${Math.abs(h.delta)}%</span>
+      <span class="mono font-bold">${rp(h.curah)}</span>
+      <span class="text-[10px] font-bold ${h.delta>=0?'text-red-400':'text-palm-400'}">${h.delta>=0?'▲':'▼'} ${Math.abs(h.delta)}%</span>
     </span>
   </div>`).join("");
 
 $("hargaStats").innerHTML = [
-  {l:"Rata-rata nasional", v:rp(avgHarga), d:"+2,1% bulan ini"},
-  {l:"Tertinggi", v:rp(Math.max(...HARGA.map(h=>h.harga))), d:"Sumatera Barat"},
-  {l:"Terendah", v:rp(Math.min(...HARGA.map(h=>h.harga))), d:"Kalimantan Tengah"},
+  {l:"CPO Rotterdam", v:usd(cpoNow), d:"+6,2% YoY"},
+  {l:"Curah nasional", v:rp(curahNow)+"/kg", d:"HET " + rp(15700)},
+  {l:"Selisih tertinggi", v:rp(Math.max(...HARGA.map(h=>h.curah-h.het))), d:"Papua vs HET"},
 ].map(s=>`<div class="card p-4"><div class="text-[11px] text-slate-500 font-semibold">${s.l}</div><div class="mt-1 text-xl font-extrabold text-gold-400">${s.v}</div><div class="text-[10px] text-slate-500 mt-0.5">${s.d}</div></div>`).join("");
 
 $("hargaTable").innerHTML = HARGA.map(h=>{
-  const pct = Math.min(100, Math.round(h.harga/h.plafon*100));
+  const pct = Math.min(100, Math.round(h.curah/h.het*100));
   return `<tr class="hover:bg-ink-850/60">
     <td class="px-4 py-3 font-semibold">${h.prov}</td>
-    <td class="px-4 py-3 text-right mono font-bold text-gold-400">${rp(h.harga)}</td>
-    <td class="px-4 py-3 text-right mono text-slate-500">${rp(h.plafon)}</td>
-    <td class="px-4 py-3 text-right text-[11px] font-bold ${h.delta>=0?'text-palm-400':'text-red-400'}">${h.delta>=0?'+':''}${h.delta}%</td>
-    <td class="px-4 py-3"><div class="h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${pct>95?'bg-red-500':pct>88?'bg-gold-500':'bg-palm-500'}" style="width:${pct}%"></div></div><div class="text-[10px] text-slate-500 mt-1 mono">${pct}% plafon</div></td>
+    <td class="px-4 py-3 text-right mono font-bold text-gold-400">${rp(h.curah)}</td>
+    <td class="px-4 py-3 text-right mono text-slate-300">${rp(h.minyakita)}</td>
+    <td class="px-4 py-3 text-right mono text-slate-500">${rp(h.premium)}</td>
+    <td class="px-4 py-3 text-right text-[11px] font-bold ${h.delta>=0?'text-red-400':'text-palm-400'}">${h.delta>=0?'+':''}${h.delta}%</td>
+    <td class="px-4 py-3"><div class="h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${pct>100?'bg-red-500':pct>95?'bg-gold-500':'bg-palm-500'}" style="width:${Math.min(pct,100)}%"></div></div><div class="text-[10px] text-slate-500 mt-1 mono">${pct}% HET</div></td>
   </tr>`;
 }).join("");
 
-/* ---------- produksi ---------- */
+/* ===== PRODUKSI & EKSPOR ===== */
 $("prodStats").innerHTML = [
-  {l:"Produksi bulan ini", v:num(totalProduksi)+" ton", d:"dari 12 blok aktif"},
-  {l:"Rendemen CPO", v:RENDEMEN.at(-1)+"%", d:"+1,2 poin YoY"},
-  {l:"Rata-rata per blok", v:num(Math.round(totalProduksi/BLOK.filter(b=>b.produksi>0).length))+" ton", d:"per bulan"},
+  {l:"Produksi CPO", v:num(PROD_CPO.at(-1))+" rb ton", d:"bulan ini"},
+  {l:"Produksi minyak goreng", v:num(PROD_MG.at(-1))+" rb ton", d:"36% dari CPO"},
+  {l:"Nilai ekspor", v:"US$505 jt", d:"457 ribu ton"},
 ].map(s=>`<div class="card p-4"><div class="text-[11px] text-slate-500 font-semibold">${s.l}</div><div class="mt-1 text-xl font-extrabold text-palm-400">${s.v}</div><div class="text-[10px] text-slate-500 mt-0.5">${s.d}</div></div>`).join("");
 
-$("panenTable").innerHTML = PANEN.map(p=>{
-  const cls = p.status==="Terverifikasi" ? "text-palm-400 border-palm-600/40 bg-palm-600/10" : p.status==="Menunggu audit" ? "text-gold-400 border-gold-500/40 bg-gold-500/10" : "text-red-300 border-red-500/40 bg-red-500/10";
+$("eksporTable").innerHTML = EKSPOR.map(e=>{
+  const cls = e.st==="Terkirim" ? "text-palm-400 border-palm-600/40 bg-palm-600/10" : e.st==="Bongkar muat" ? "text-gold-400 border-gold-500/40 bg-gold-500/10" : "text-sky-300 border-sky-500/40 bg-sky-500/10";
   return `<tr class="hover:bg-ink-850/60">
-    <td class="px-4 py-3 font-semibold text-slate-200">${p.blok}</td>
-    <td class="px-4 py-3 text-slate-400">${p.tgl}</td>
-    <td class="px-4 py-3 text-right mono">${p.ton} t</td>
-    <td class="px-4 py-3 text-right mono text-slate-400">${num(p.janjang)}</td>
-    <td class="px-4 py-3 text-right mono text-gold-400">${p.rend}%</td>
-    <td class="px-4 py-3">${badge(p.status, cls)}</td>
+    <td class="px-4 py-3 font-semibold">${e.negara}</td>
+    <td class="px-4 py-3 text-slate-400">${e.produk}</td>
+    <td class="px-4 py-3 text-right mono">${num(e.vol)} t</td>
+    <td class="px-4 py-3 text-right mono text-gold-400">US$${e.nilai} jt</td>
+    <td class="px-4 py-3">${badge(e.st, cls)}</td>
   </tr>`;
 }).join("");
 
-/* ---------- armada ---------- */
-const armadaJalan = ARMADA.filter(a=>a.status==="Jalan").length;
-$("armadaStats").innerHTML = [
-  {l:"Truk aktif", v:armadaJalan+"/"+ARMADA.length, d:"di jalan"},
-  {l:"Muatan total", v:num(ARMADA.reduce((a,b)=>a+b.muatan,0))+" t", d:"menuju PKS"},
-  {l:"PKS beroperasi", v:PKS.length, d:"4 provinsi"},
-  {l:"Utilisasi PKS", v:Math.round(PKS.reduce((a,p)=>a+p.terpakai/p.kapasitas,0)/PKS.length*100)+"%", d:"rata-rata"},
+/* ===== DISTRIBUSI ===== */
+$("distStats").innerHTML = [
+  {l:"Unit berjalan", v:DIST.filter(d=>d.st==="Jalan").length+"/"+DIST.length, d:"truk & tangki"},
+  {l:"Volume dikirim", v:num(DIST.reduce((a,b)=>a+b.muatan,0))+" ribu L", d:"hari ini"},
+  {l:"Refinery aktif", v:REFINERY.length, d:"4 provinsi"},
+  {l:"Utilisasi refinery", v:Math.round(REFINERY.reduce((a,r)=>a+r.terpakai/r.kapasitas,0)/REFINERY.length*100)+"%", d:"rata-rata"},
 ].map(s=>`<div class="card p-4"><div class="text-[11px] text-slate-500 font-semibold">${s.l}</div><div class="mt-1 text-lg font-extrabold text-palm-400">${s.v}</div><div class="text-[10px] text-slate-500 mt-0.5">${s.d}</div></div>`).join("");
 
-$("armadaTable").innerHTML = ARMADA.map(a=>`
+$("distTable").innerHTML = DIST.map(d=>`
   <tr class="hover:bg-ink-850/60">
-    <td class="px-4 py-3 font-semibold mono text-xs">${a.truk}</td>
-    <td class="px-4 py-3 text-slate-400 text-xs">${a.rute}</td>
-    <td class="px-4 py-3 text-right mono">${a.muatan? a.muatan+" t" : "—"}</td>
-    <td class="px-4 py-3 text-right text-xs text-slate-400">${a.eta}</td>
-    <td class="px-4 py-3">${statBadge(a.status)}</td>
+    <td class="px-4 py-3 font-semibold mono text-xs">${d.unit}</td>
+    <td class="px-4 py-3 text-slate-400 text-xs">${d.rute}</td>
+    <td class="px-4 py-3 text-right mono">${d.muatan} rb L</td>
+    <td class="px-4 py-3 text-right text-xs text-slate-400">${d.eta}</td>
+    <td class="px-4 py-3">${statBadge(d.st)}</td>
   </tr>`).join("");
 
-$("pksGrid").innerHTML = PKS.map(p=>{
-  const pct = Math.round(p.terpakai/p.kapasitas*100);
+$("refineryGrid").innerHTML = REFINERY.map(r=>{
+  const pct = Math.round(r.terpakai/r.kapasitas*100);
   return `<div class="card p-4">
     <div class="flex items-start justify-between">
-      <div><div class="font-bold text-sm">${p.nama}</div><div class="text-[11px] text-slate-500">${p.lokasi}</div></div>
-      <span class="text-[10px] font-bold ${pct>85?'text-red-300':pct>70?'text-gold-400':'text-palm-400'} mono">${pct}%</span>
+      <div><div class="font-bold text-sm">${r.nama}</div><div class="text-[11px] text-slate-500">${r.lokasi}</div></div>
+      <span class="text-[10px] font-bold ${pct>90?'text-red-300':pct>75?'text-gold-400':'text-palm-400'} mono">${pct}%</span>
     </div>
-    <div class="mt-3 h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${pct>85?'bg-red-500':pct>70?'bg-gold-500':'bg-palm-500'}" style="width:${pct}%"></div></div>
-    <div class="mt-1.5 text-[10px] text-slate-500 mono">${p.terpakai} / ${p.kapasitas} ton/jam</div>
+    <div class="mt-3 h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${pct>90?'bg-red-500':pct>75?'bg-gold-500':'bg-palm-500'}" style="width:${pct}%"></div></div>
+    <div class="mt-1.5 text-[10px] text-slate-500 mono">${num(r.terpakai)} / ${num(r.kapasitas)} ton/hari</div>
   </div>`;
 }).join("");
 
-/* ---------- petani ---------- */
-function renderPetani(q=""){
-  const list = PETANI.filter(p=>(p.nama+" "+p.kop+" "+p.blok).toLowerCase().includes(q.toLowerCase()));
-  $("petaniGrid").innerHTML = list.length ? list.map(p=>`
+/* ===== PRODUSEN ===== */
+function renderProdusen(q=""){
+  const list = PRODUSEN.filter(p=>(p.nama+" "+p.merek+" "+p.prov).toLowerCase().includes(q.toLowerCase()));
+  $("produsenGrid").innerHTML = list.length ? list.map(p=>`
     <div class="card card-hover p-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-ink-700 border border-[#2a4034] grid place-items-center font-extrabold text-palm-400">${p.nama.charAt(0)}</div>
+        <div class="w-10 h-10 rounded-xl bg-ink-700 border border-[#2a4034] grid place-items-center font-extrabold text-gold-400">${p.nama.replace(/^PT /,"").charAt(0)}</div>
         <div class="min-w-0">
           <div class="font-bold text-sm truncate">${p.nama}</div>
-          <div class="text-[11px] text-slate-500 truncate">${p.kop}</div>
+          <div class="text-[11px] text-slate-500 truncate">${p.merek}</div>
         </div>
       </div>
       <div class="mt-3 grid grid-cols-2 gap-2 text-[11px]">
-        <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Lahan</div><div class="font-bold mono">${p.luas} ha</div></div>
-        <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Blok</div><div class="font-bold mono">${p.blok}</div></div>
+        <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Kapasitas</div><div class="font-bold mono">${num(p.kapasitas)} t/hari</div></div>
+        <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Provinsi</div><div class="font-bold">${p.prov}</div></div>
       </div>
-      <div class="mt-3">${badge(p.status, p.status==="Plasma" ? "text-palm-400 border-palm-600/40 bg-palm-600/10" : "text-sky-300 border-sky-500/40 bg-sky-500/10")}</div>
-    </div>`).join("") : `<div class="col-span-full text-center py-12 text-slate-500 text-sm">Petani tidak ditemukan.</div>`;
+      <div class="mt-3">${badge(p.sertifikat, "text-palm-400 border-palm-600/40 bg-palm-600/10")}</div>
+    </div>`).join("") : `<div class="col-span-full text-center py-12 text-slate-500 text-sm">Produsen tidak ditemukan.</div>`;
 }
-renderPetani();
-$("cariPetani").addEventListener("input", e=>renderPetani(e.target.value));
+renderProdusen();
+$("cariProdusen").addEventListener("input", e=>renderProdusen(e.target.value));
 
-/* ---------- ledger ---------- */
+/* ===== LEDGER ===== */
 $("chain").innerHTML = [
-  {l:"Blok tercatat", v:"18.402"},
-  {l:"Node aktif", v:"24"},
+  {l:"Batch tercatat", v:"24.918"},
+  {l:"Node aktif", v:"31"},
   {l:"Audit terbuka", v:"1"},
 ].map(c=>`<div class="bg-ink-850 rounded-xl p-3 border border-[#1b2a22]"><div class="text-[11px] text-slate-500">${c.l}</div><div class="text-lg font-extrabold mono text-palm-400">${c.v}</div></div>`).join("");
 
@@ -621,57 +620,57 @@ $("ledgerTable").innerHTML = LEDGER.map(b=>`
     <td class="px-4 py-3">${badge(b.st, b.st==="COMMITTED" ? "text-palm-400 border-palm-600/40 bg-palm-600/10" : "text-gold-400 border-gold-500/40 bg-gold-500/10")}</td>
   </tr>`).join("");
 
-/* ---------- peta ---------- */
+/* ===== PETA ===== */
 let map, markers = [];
+const COL = {Normal:"#4ade80", Defisit:"#ef4444"};
 function initMap(){
   if(map) return;
-  map = L.map("map", {scrollWheelZoom:false, attributionControl:true}).setView([-1.1, 108.5], 4);
+  map = L.map("map", {scrollWheelZoom:false}).setView([-2.2, 118], 5);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
   }).addTo(map);
-  BLOK.forEach(b=>{
-    const color = {Panen:"#f59e0b", Produktif:"#4ade80", Perawatan:"#38bdf8", Replanting:"#94a3b8"}[b.status];
-    const m = L.circleMarker([b.lat,b.lng], {radius: 8 + b.luas/500, color, fillColor: color, fillOpacity:.35, weight:2})
+  DEPOT.forEach(d=>{
+    const color = COL[d.status] || "#94a3b8";
+    const m = L.circleMarker([d.lat,d.lng], {radius: 8 + d.stok/4, color, fillColor: color, fillOpacity:.35, weight:2})
       .addTo(map)
-      .bindPopup(`<div class="text-xs leading-relaxed"><b>${b.id} · ${b.nama}</b><br>${b.kab}<br>Luas ${num(b.luas)} ha · ${b.umur} th<br>Status: <b>${ST[b.status]?.[1]||b.status}</b><br>Produksi ${b.produksi} ton/bln</div>`);
-    m._blok = b;
+      .bindPopup(`<div class="text-xs leading-relaxed"><b>${d.id} · ${d.nama}</b><br>${d.kota}<br>Stok <b>${d.stok} / ${d.kapasitas}</b> ribu L<br>Status: <b>${d.status}</b></div>`);
+    m._depot = d;
     markers.push(m);
   });
-  $("mapLegend").innerHTML = Object.entries(ST).slice(0,4).map(([k,v])=>`
+  $("mapLegend").innerHTML = Object.entries(COL).map(([k,v])=>`
     <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 bg-ink-850 border border-[#1b2a22] px-2.5 py-1 rounded-lg">
-      <span class="w-2 h-2 rounded-full" style="background:${{Panen:"#f59e0b",Produktif:"#4ade80",Perawatan:"#38bdf8",Replanting:"#94a3b8"}[k]}"></span>${v[1]}
+      <span class="w-2 h-2 rounded-full" style="background:${v}"></span>${k}
     </span>`).join("");
   setTimeout(()=>map.invalidateSize(), 200);
 }
 function mapFilter(status){
   if(!map) return;
   markers.forEach(m=>{
-    const ok = !status || m._blok.status===status;
+    const ok = !status || m._depot.status===status;
     if(ok && !map.hasLayer(m)) m.addTo(map);
     if(!ok && map.hasLayer(m)) map.removeLayer(m);
   });
 }
-$("blokGrid").innerHTML = BLOK.map(b=>`
-  <div class="card card-hover p-4">
+$("depotGrid").innerHTML = DEPOT.map(d=>{
+  const pct = Math.round(d.stok/d.kapasitas*100);
+  return `<div class="card card-hover p-4">
     <div class="flex items-start justify-between gap-2">
       <div class="min-w-0">
-        <div class="text-[10px] mono text-slate-500">${b.id}</div>
-        <div class="font-bold text-sm truncate">${b.nama}</div>
-        <div class="text-[11px] text-slate-500 truncate">${b.kab}</div>
+        <div class="text-[10px] mono text-slate-500">${d.id}</div>
+        <div class="font-bold text-sm truncate">${d.nama}</div>
+        <div class="text-[11px] text-slate-500 truncate">${d.kota}</div>
       </div>
-      ${statBadge(b.status)}
+      ${statBadge(d.status)}
     </div>
-    <div class="mt-3 grid grid-cols-3 gap-1.5 text-[11px]">
-      <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Luas</div><div class="font-bold mono">${num(b.luas)}</div></div>
-      <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Umur</div><div class="font-bold mono">${b.umur} th</div></div>
-      <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">TBS</div><div class="font-bold mono">${b.produksi} t</div></div>
-    </div>
-  </div>`).join("");
+    <div class="mt-3 h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${pct<30?'bg-red-500':pct<60?'bg-gold-500':'bg-palm-500'}" style="width:${pct}%"></div></div>
+    <div class="mt-1.5 flex justify-between text-[10px] text-slate-500 mono"><span>${d.stok} / ${d.kapasitas} rb L</span><span>${pct}%</span></div>
+  </div>`;
+}).join("");
 
-/* ---------- tabs ---------- */
+/* ===== TABS ===== */
 const TITLES = {
-  dashboard:"Dashboard Operasional", peta:"Peta Kebun", produksi:"Produksi & Panen",
-  harga:"Harga TBS", armada:"Armada & PKS", petani:"Petani Mitra", ledger:"Traceability"
+  dashboard:"Dashboard Pasar Minyak Sawit", harga:"Harga Minyak Goreng", peta:"Stok & Depot",
+  produksi:"Produksi & Ekspor", distribusi:"Distribusi", produsen:"Produsen & Merek", ledger:"Traceability"
 };
 function switchTab(name){
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active", t.id==="tab-"+name));
@@ -695,14 +694,12 @@ function closeSidebar(){
   $("overlay").classList.add("hidden");
 }
 
-/* ---------- clock ---------- */
+/* ===== CLOCK ===== */
 function tick(){
-  const d = new Date();
-  $("clock").textContent = d.toLocaleTimeString("id-ID",{hour12:false}) + " WIB";
+  $("clock").textContent = new Date().toLocaleTimeString("id-ID",{hour12:false}) + " WIB";
 }
 tick(); setInterval(tick, 1000);
 
-/* init */
 const start = location.hash.slice(1);
 switchTab(TITLES[start] ? start : "dashboard");
 </script>

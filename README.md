@@ -1,36 +1,35 @@
-# SawitMonitor
+# SawitMonitor — Minyak Sawit
 
-Dashboard monitoring kebun sawit: peta blok, produksi TBS, harga, armada, petani mitra, dan jejak panen (traceability).
+Dashboard monitoring **minyak sawit**: harga CPO, harga minyak goreng per provinsi, stok depot, ekspor, distribusi, produsen, dan jejak batch.
 
 Demo: https://sawit-monitor.vercel.app
 
 ## Fitur
 
-- **Dashboard** — KPI luas kebun, produksi, harga, petani; grafik produksi 12 bulan; status blok; tugas panen
-- **Peta Kebun** — Leaflet + tile gelap, marker per blok (warna = status), filter "siap panen"
-- **Produksi** — tonase + rendemen CPO, tabel panen terbaru
-- **Harga TBS** — tren 12 bulan, harga per provinsi vs plafon Disbun
-- **Armada & PKS** — posisi truk, muatan, ETA, utilisasi pabrik
-- **Petani Mitra** — pencarian nama/koperasi, luas lahan, status plasma/swadaya
-- **Traceability** — blok hash per event panen, audit sampai kebun asal
+- **Dashboard** — KPI harga CPO (USD/ton), curah (Rp/kg), stok nasional, ekspor; grafik CPO 12 bulan; kondisi pasar; peringatan harga
+- **Harga Minyak** — CPO vs curah (indeks), tabel curah / Minyakita / premium per provinsi vs HET
+- **Stok & Depot** — Leaflet dark, marker depot (ukuran = stok, warna = status), filter defisit
+- **Produksi & Ekspor** — CPO vs minyak goreng, tabel ekspor per negara tujuan
+- **Distribusi** — truk tangki & kontainer, ETA, utilisasi refinery
+- **Produsen** — refinery + merek kemasan + sertifikat ISPO, pencarian
+- **Traceability** — batch CPO → refinery → kemasan → distributor sebagai blok hash
 
 ## Jalankan
 
-Buka `index.html` di browser. Tanpa build. Leaflet & font dari CDN.
+Buka `index.html`. Tanpa build. Leaflet & font dari CDN.
 
 ## Kustomisasi
 
-Semua data dummy di `<script>` bawah:
-
 | Konstanta | Isi |
 |---|---|
-| `BLOK` | blok kebun: koordinat, luas, status, umur, produksi |
-| `PRODUKSI`, `HARGA_TREN`, `RENDEMEN` | seri 12 bulan |
-| `HARGA` | harga per provinsi + plafon |
-| `PANEN`, `TUGAS`, `ARMADA`, `PKS`, `PETANI`, `LEDGER` | tabel-tabel operasional |
+| `CPO`, `CURAH` | seri harga 12 bulan (USD/ton, Rp/kg) |
+| `PROD_CPO`, `PROD_MG` | produksi bulanan (ribu ton) |
+| `HARGA` | per provinsi: curah, Minyakita, premium, HET |
+| `DEPOT` | depot: koordinat, stok, kapasitas, status |
+| `EKSPOR`, `DIST`, `REFINERY`, `PRODUSEN`, `ALERT`, `LEDGER` | tabel operasional |
 
-Ganti koordinat di `BLOK` → peta ikut menyesuaikan.
+Semua data ilustratif.
 
 ## Deploy
 
-Static site. `vercel --prod` atau push ke `main` (auto-deploy).
+Static site. `vercel --prod` atau push ke `main`.
