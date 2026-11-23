@@ -3,3 +3,6 @@
 .DS_Store
 Thumbs.db
 _c.js
+
+.vercel
+.env*
