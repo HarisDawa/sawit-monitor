@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SawitMonitor — Monitoring Kebun & Rantai Pasok Sawit</title>
+<meta name="description" content="Dashboard monitoring kebun sawit: peta blok, produksi TBS, harga, armada, dan jejak panen.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='85'>🌴</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { sans:['Outfit','system-ui','sans-serif'], mono:['JetBrains Mono','ui-monospace','monospace'] },
+  colors: {
+    ink: { 950:'#060907', 900:'#0a0f0c', 850:'#0d1411', 800:'#111a15', 700:'#18241d' },
+    palm: { 400:'#7ee787', 500:'#4ade80', 600:'#22c55e' },
+    gold: { 400:'#fbbf24', 500:'#f59e0b' }
+  }
+} } }
+</script>
+<style>
+  html{color-scheme:dark}
+  body{background:#060907;color:#e6efe9;font-family:'Outfit',system-ui,sans-serif}
+  .card{background:linear-gradient(180deg,#0d1411 0%,#0a0f0c 100%);border:1px solid #1b2a22;border-radius:16px}
+  .card-hover{transition:border-color .2s, transform .2s}
+  .card-hover:hover{border-color:#2f4a3b;transform:translateY(-2px)}
+  .grid-bg{background-image:radial-gradient(circle at 1px 1px, rgba(74,222,128,.08) 1px, transparent 0);background-size:22px 22px}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#0a0f0c}
+  ::-webkit-scrollbar-thumb{background:#1f3329;border-radius:8px}
+  ::-webkit-scrollbar-thumb:hover{background:#2c4a39}
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+  .nav-btn.active{background:rgba(34,197,94,.12);color:#7ee787;border-color:rgba(34,197,94,.35)}
+  .nav-btn.active .dot{background:#4ade80}
+  .tab{display:none}
+  .tab.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .pulse{animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  #map{height:520px;border-radius:14px;z-index:0}
+  .leaflet-container{background:#0a0f0c;font-family:'Outfit',sans-serif}
+  .leaflet-popup-content-wrapper{background:#0d1411;color:#e6efe9;border:1px solid #2f4a3b;border-radius:12px}
+  .leaflet-popup-tip{background:#0d1411;border:1px solid #2f4a3b}
+  .leaflet-bar a{background:#0d1411;color:#e6efe9;border-color:#2f4a3b}
+  .leaflet-bar a:hover{background:#18241d}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+  :focus-visible{outline:2px solid #4ade80;outline-offset:2px}
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="flex min-h-screen">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-[248px] shrink-0 bg-ink-900 border-r border-[#16241c] flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-300">
+    <div class="px-5 h-16 flex items-center gap-2.5 border-b border-[#16241c]">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-palm-500 to-emerald-700 grid place-items-center text-lg">🌴</div>
+      <div class="leading-tight">
+        <div class="font-extrabold text-[15px] tracking-tight">SawitMonitor</div>
+        <div class="text-[10px] text-slate-500 mono">v1.0 · LIVE</div>
+      </div>
+    </div>
+
+    <nav class="p-3 space-y-1 flex-1 overflow-y-auto" aria-label="Navigasi utama">
+      <div class="px-2 pt-2 pb-1 text-[10px] font-bold tracking-widest text-slate-600 uppercase">Operasional</div>
+      <button data-tab="dashboard" class="nav-btn active w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Dashboard</button>
+      <button data-tab="peta" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Peta Kebun</button>
+      <button data-tab="produksi" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Produksi</button>
+      <button data-tab="harga" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Harga TBS</button>
+
+      <div class="px-2 pt-4 pb-1 text-[10px] font-bold tracking-widest text-slate-600 uppercase">Rantai Pasok</div>
+      <button data-tab="armada" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Armada &amp; PKS</button>
+      <button data-tab="petani" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Petani Mitra</button>
+      <button data-tab="ledger" class="nav-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 border border-transparent hover:text-slate-200 hover:bg-ink-800 transition"><span class="dot w-1.5 h-1.5 rounded-full bg-slate-600"></span> Traceability</button>
+    </nav>
+
+    <div class="p-3 border-t border-[#16241c]">
+      <div class="card p-3">
+        <div class="flex items-center gap-2 text-[11px] font-bold text-palm-400"><span class="w-1.5 h-1.5 rounded-full bg-palm-500 pulse"></span> Sensor aktif</div>
+        <div class="mt-1 text-[11px] text-slate-500">142 node IoT · sinkron <span id="sync">2</span> mnt lalu</div>
+      </div>
+      <div class="mt-3 flex items-center gap-2.5 px-2">
+        <div class="w-8 h-8 rounded-full bg-ink-700 border border-[#2a4034] grid place-items-center text-xs font-bold">AH</div>
+        <div class="min-w-0">
+          <div class="text-xs font-bold truncate">Ahmad Haris</div>
+          <div class="text-[10px] text-slate-500 truncate">Manajer Operasional</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div id="overlay" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <!-- MAIN -->
+  <div class="flex-1 min-w-0">
+    <header class="sticky top-0 z-20 bg-ink-950/85 backdrop-blur border-b border-[#16241c]">
+      <div class="px-4 sm:px-6 h-16 flex items-center gap-3">
+        <button onclick="toggleSidebar()" class="lg:hidden p-2 -ml-1 rounded-lg hover:bg-ink-800" aria-label="Buka menu">☰</button>
+        <div class="min-w-0">
+          <h1 id="pageTitle" class="font-bold text-[15px] leading-tight truncate">Dashboard Operasional</h1>
+          <p class="text-[11px] text-slate-500 truncate">Kebun sawit · Riau, Jambi, Sumbar, Kalimantan</p>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-palm-400 bg-palm-600/10 border border-palm-600/30 px-2.5 py-1.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-palm-500 pulse"></span> Real-time</span>
+          <span id="clock" class="mono text-[11px] text-slate-500 tabular-nums"></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-4 sm:p-6 space-y-5">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section id="tab-dashboard" class="tab active space-y-5">
+        <div id="kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
+
+        <div class="grid lg:grid-cols-3 gap-4">
+          <div class="card p-4 sm:p-5 lg:col-span-2">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="font-bold text-sm">Produksi TBS 12 Bulan</h2>
+                <p class="text-[11px] text-slate-500">Total tonase tandan buah segar per bulan</p>
+              </div>
+              <span class="text-[11px] font-bold text-palm-400 bg-palm-600/10 border border-palm-600/25 px-2 py-1 rounded-lg">+8,4% YoY</span>
+            </div>
+            <div id="chartProduksi" class="mt-4"></div>
+          </div>
+
+          <div class="card p-4 sm:p-5">
+            <h2 class="font-bold text-sm">Status Blok</h2>
+            <p class="text-[11px] text-slate-500">Distribusi status lahan saat ini</p>
+            <div id="statusList" class="mt-4 space-y-3"></div>
+            <div class="mt-5 pt-4 border-t border-[#1b2a22]">
+              <div class="text-[11px] text-slate-500">Curah hujan rata-rata</div>
+              <div class="mt-1 flex items-end gap-2">
+                <span class="text-2xl font-extrabold">184</span>
+                <span class="text-xs text-slate-500 mb-1">mm/bulan</span>
+                <span class="ml-auto text-[11px] font-bold text-gold-400">Optimal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-4">
+          <div class="card p-4 sm:p-5">
+            <div class="flex items-center justify-between">
+              <h2 class="font-bold text-sm">Tugas Panen Hari Ini</h2>
+              <span id="tugasProgress" class="text-[11px] font-bold text-slate-500"></span>
+            </div>
+            <ul id="tugasList" class="mt-3 space-y-2"></ul>
+          </div>
+
+          <div class="card p-4 sm:p-5">
+            <div class="flex items-center justify-between">
+              <h2 class="font-bold text-sm">Harga TBS per Provinsi</h2>
+              <button onclick="switchTab('harga')" class="text-[11px] font-bold text-palm-400 hover:underline">Detail →</button>
+            </div>
+            <div id="hargaMini" class="mt-3 space-y-2"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PETA ===== -->
+      <section id="tab-peta" class="tab space-y-4">
+        <div class="flex flex-wrap items-center gap-2 justify-between">
+          <div class="flex flex-wrap gap-2" id="mapLegend"></div>
+          <div class="flex gap-2">
+            <button onclick="mapFilter(null)" class="text-[11px] font-bold bg-ink-800 border border-[#24382d] hover:border-palm-600/50 px-3 py-1.5 rounded-lg">Semua blok</button>
+            <button onclick="mapFilter('Panen')" class="text-[11px] font-bold bg-ink-800 border border-[#24382d] hover:border-palm-600/50 px-3 py-1.5 rounded-lg">Siap panen</button>
+          </div>
+        </div>
+        <div class="card p-2 sm:p-3">
+          <div id="map" class="w-full"></div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" id="blokGrid"></div>
+      </section>
+
+      <!-- ===== PRODUKSI ===== -->
+      <section id="tab-produksi" class="tab space-y-4">
+        <div class="grid sm:grid-cols-3 gap-3" id="prodStats"></div>
+        <div class="card p-4 sm:p-5">
+          <h2 class="font-bold text-sm">Tonase &amp; Rendemen CPO</h2>
+          <p class="text-[11px] text-slate-500">Perbandingan produksi TBS (ton) dan rendemen CPO (%)</p>
+          <div id="chartRendemen" class="mt-4"></div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-[#1b2a22]">
+            <h2 class="font-bold text-sm">Panen Terbaru</h2>
+            <p class="text-[11px] text-slate-500">Catatan panen yang masuk dari kebun mitra</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
+                <tr>
+                  <th class="text-left font-bold px-4 py-3">Blok</th>
+                  <th class="text-left font-bold px-4 py-3">Tanggal</th>
+                  <th class="text-right font-bold px-4 py-3">Tonase</th>
+                  <th class="text-right font-bold px-4 py-3">Janjang</th>
+                  <th class="text-right font-bold px-4 py-3">Rendemen</th>
+                  <th class="text-left font-bold px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="panenTable" class="divide-y divide-[#16241c]"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== HARGA ===== -->
+      <section id="tab-harga" class="tab space-y-4">
+        <div class="grid sm:grid-cols-3 gap-3" id="hargaStats"></div>
+        <div class="card p-4 sm:p-5">
+          <h2 class="font-bold text-sm">Tren Harga TBS</h2>
+          <p class="text-[11px] text-slate-500">Rata-rata nasional 12 bulan terakhir (Rp/kg)</p>
+          <div id="chartHarga" class="mt-4"></div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-[#1b2a22] flex items-center justify-between gap-3">
+            <div>
+              <h2 class="font-bold text-sm">Harga per Provinsi</h2>
+              <p class="text-[11px] text-slate-500">Dibandingkan plafon harga Disbun</p>
+            </div>
+            <span class="text-[10px] font-bold text-slate-500 mono">update 06:00 WIB</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
+                <tr>
+                  <th class="text-left font-bold px-4 py-3">Provinsi</th>
+                  <th class="text-right font-bold px-4 py-3">Harga</th>
+                  <th class="text-right font-bold px-4 py-3">Plafon</th>
+                  <th class="text-right font-bold px-4 py-3">Δ</th>
+                  <th class="text-left font-bold px-4 py-3 w-40">Posisi</th>
+                </tr>
+              </thead>
+              <tbody id="hargaTable" class="divide-y divide-[#16241c]"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ARMADA ===== -->
+      <section id="tab-armada" class="tab space-y-4">
+        <div class="grid sm:grid-cols-4 gap-3" id="armadaStats"></div>
+        <div class="card overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-[#1b2a22]">
+            <h2 class="font-bold text-sm">Armada Angkutan TBS</h2>
+            <p class="text-[11px] text-slate-500">Posisi &amp; muatan truk menuju PKS</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
+                <tr>
+                  <th class="text-left font-bold px-4 py-3">Truk</th>
+                  <th class="text-left font-bold px-4 py-3">Rute</th>
+                  <th class="text-right font-bold px-4 py-3">Muatan</th>
+                  <th class="text-right font-bold px-4 py-3">ETA</th>
+                  <th class="text-left font-bold px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="armadaTable" class="divide-y divide-[#16241c]"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3" id="pksGrid"></div>
+      </section>
+
+      <!-- ===== PETANI ===== -->
+      <section id="tab-petani" class="tab space-y-4">
+        <div class="card p-4 sm:p-5">
+          <div class="flex flex-wrap items-center gap-2 justify-between">
+            <div>
+              <h2 class="font-bold text-sm">Petani Mitra</h2>
+              <p class="text-[11px] text-slate-500">Plasma &amp; swadaya terverifikasi</p>
+            </div>
+            <input id="cariPetani" type="search" placeholder="Cari nama / koperasi…" class="text-xs bg-ink-850 border border-[#24382d] rounded-lg px-3 py-2 outline-none focus:border-palm-600 w-full sm:w-56">
+          </div>
+        </div>
+        <div id="petaniGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </section>
+
+      <!-- ===== LEDGER ===== -->
+      <section id="tab-ledger" class="tab space-y-4">
+        <div class="card p-4 sm:p-5">
+          <h2 class="font-bold text-sm">Jejak Panen (Traceability)</h2>
+          <p class="text-[11px] text-slate-500">Setiap penjualan TBS dicatat sebagai blok hash — bisa diaudit sampai kebun asal.</p>
+          <div id="chain" class="mt-4 grid sm:grid-cols-3 gap-3"></div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[11px] uppercase tracking-wide text-slate-500 bg-ink-850">
+                <tr>
+                  <th class="text-left font-bold px-4 py-3">Block hash</th>
+                  <th class="text-left font-bold px-4 py-3">Event</th>
+                  <th class="text-left font-bold px-4 py-3">Blok / entitas</th>
+                  <th class="text-left font-bold px-4 py-3">Node</th>
+                  <th class="text-left font-bold px-4 py-3">Waktu</th>
+                  <th class="text-left font-bold px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="ledgerTable" class="divide-y divide-[#16241c]"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <footer class="pt-2 pb-6 text-[11px] text-slate-600 flex flex-col sm:flex-row justify-between gap-1">
+        <span>SawitMonitor — demo dashboard monitoring sawit.</span>
+        <span>Data ilustratif · tidak untuk keputusan bisnis.</span>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const rp = n => "Rp" + n.toLocaleString("id-ID");
+const num = n => n.toLocaleString("id-ID");
+
+const BLOK = [
+  {id:"BKS-01", nama:"Sungai Apit", kab:"Siak, Riau", lat:0.78, lng:102.15, luas:1240, status:"Panen", umur:8, produksi:18.4, petani:"Koperasi Maju Tani"},
+  {id:"BKS-02", nama:"Tapung Hilir", kab:"Kampar, Riau", lat:0.95, lng:101.28, luas:980, status:"Produktif", umur:11, produksi:16.2, petani:"KUD Tapung Jaya"},
+  {id:"BKS-03", nama:"Batang Cenaku", kab:"Indragiri Hulu, Riau", lat:-0.62, lng:102.18, luas:1560, status:"Produktif", umur:9, produksi:22.8, petani:"Koperasi Cenaku"},
+  {id:"BKS-04", nama:"Pangkalan Lesung", kab:"Pelalawan, Riau", lat:0.12, lng:102.08, luas:740, status:"Perawatan", umur:5, produksi:6.1, petani:"Kelompok Tani Lesung"},
+  {id:"BKS-05", nama:"Muara Bungo", kab:"Bungo, Jambi", lat:-1.47, lng:102.09, luas:1120, status:"Panen", umur:7, produksi:15.9, petani:"KUD Bungo Sejahtera"},
+  {id:"BKS-06", nama:"Tebo Ulu", kab:"Tebo, Jambi", lat:-1.32, lng:102.35, luas:860, status:"Produktif", umur:13, produksi:13.4, petani:"Koperasi Tebo Mandiri"},
+  {id:"BKS-07", nama:"Kinali", kab:"Pasaman Barat, Sumbar", lat:0.02, lng:99.94, luas:640, status:"Replanting", umur:3, produksi:0, petani:"KUD Kinali"},
+  {id:"BKS-08", nama:"Sungai Rumbai", kab:"Dharmasraya, Sumbar", lat:-1.06, lng:101.62, luas:910, status:"Produktif", umur:10, produksi:12.7, petani:"Koperasi Rumbai"},
+  {id:"BKS-09", nama:"Sanggau", kab:"Sanggau, Kalbar", lat:0.12, lng:110.6, luas:1480, status:"Panen", umur:6, produksi:19.6, petani:"KUD Sanggau Lestari"},
+  {id:"BKS-10", nama:"Kotawaringin Timur", kab:"Kotim, Kalteng", lat:-2.4, lng:112.9, luas:2050, status:"Produktif", umur:12, produksi:27.3, petani:"Koperasi Kotim Jaya"},
+  {id:"BKS-11", nama:"Seruyan Hilir", kab:"Seruyan, Kalteng", lat:-3.2, lng:112.3, luas:1320, status:"Perawatan", umur:4, produksi:8.9, petani:"Kelompok Seruyan"},
+  {id:"BKS-12", nama:"Long Kali", kab:"Paser, Kaltim", lat:-1.1, lng:116.4, luas:1120, status:"Produktif", umur:9, produksi:15.2, petani:"KUD Paser Makmur"},
+];
+
+const PRODUKSI = [3120,2980,3410,3560,3290,3105,3680,3840,3720,3950,4010,4180];
+const BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+const RENDEMEN = [21.8,21.4,22.1,22.4,22.0,21.6,22.6,22.9,22.7,23.1,23.0,23.4];
+const HARGA_TREN = [2180,2210,2260,2305,2280,2250,2340,2390,2360,2420,2470,2510];
+
+const HARGA = [
+  {prov:"Riau", harga:2540, plafon:2680, delta:1.6},
+  {prov:"Jambi", harga:2490, plafon:2620, delta:0.8},
+  {prov:"Sumatera Barat", harga:2610, plafon:2700, delta:2.4},
+  {prov:"Sumatera Utara", harga:2450, plafon:2600, delta:-0.6},
+  {prov:"Kalimantan Barat", harga:2380, plafon:2550, delta:1.1},
+  {prov:"Kalimantan Tengah", harga:2320, plafon:2520, delta:-1.2},
+  {prov:"Kalimantan Timur", harga:2410, plafon:2580, delta:0.4},
+];
+
+const PANEN = [
+  {blok:"BKS-09 · Sanggau", tgl:"23 Nov", ton:19.6, janjang:1240, rend:23.1, status:"Terverifikasi"},
+  {blok:"BKS-01 · Sungai Apit", tgl:"23 Nov", ton:18.4, janjang:1180, rend:22.8, status:"Terverifikasi"},
+  {blok:"BKS-05 · Muara Bungo", tgl:"22 Nov", ton:15.9, janjang:1020, rend:22.4, status:"Menunggu audit"},
+  {blok:"BKS-10 · Kotim", tgl:"22 Nov", ton:27.3, janjang:1690, rend:23.4, status:"Terverifikasi"},
+  {blok:"BKS-03 · Batang Cenaku", tgl:"21 Nov", ton:22.8, janjang:1430, rend:22.9, status:"Terverifikasi"},
+  {blok:"BKS-11 · Seruyan", tgl:"21 Nov", ton:8.9, janjang:610, rend:21.7, status:"Perlu cek"},
+];
+
+const TUGAS = [
+  {t:"Verifikasi timbangan BKS-01", d:"Pukul 09:00 · PKS Siak", done:true},
+  {t:"Audit rendemen BKS-10", d:"Pukul 11:00 · Lab Kotim", done:true},
+  {t:"Jadwalkan panen BKS-04", d:"Pukul 13:30 · Pelalawan", done:false},
+  {t:"Cek sensor kelembapan BKS-07", d:"Pukul 15:00 · Kinali", done:false},
+  {t:"Setor laporan TBS ke Disbun", d:"Pukul 16:30 · Online", done:false},
+];
+
+const ARMADA = [
+  {truk:"BM 8841 SA", rute:"BKS-01 → PKS Siak", muatan:18.4, eta:"12 mnt", status:"Jalan"},
+  {truk:"BH 7712 KJ", rute:"BKS-05 → PKS Bungo", muatan:15.9, eta:"28 mnt", status:"Jalan"},
+  {truk:"KB 2290 PA", rute:"BKS-09 → PKS Sanggau", muatan:19.6, eta:"Tiba", status:"Bongkar"},
+  {truk:"KH 5567 TG", rute:"BKS-10 → PKS Kotim", muatan:27.3, eta:"1 j 05 m", status:"Jalan"},
+  {truk:"BM 3310 RI", rute:"BKS-02 → PKS Siak", muatan:0, eta:"—", status:"Perawatan"},
+  {truk:"DA 8821 JM", rute:"BKS-06 → PKS Tebo", muatan:13.4, eta:"Tiba", status:"Bongkar"},
+];
+
+const PKS = [
+  {nama:"PKS Siak", kapasitas:60, terpakai:48, lokasi:"Siak, Riau"},
+  {nama:"PKS Bungo", kapasitas:45, terpakai:31, lokasi:"Bungo, Jambi"},
+  {nama:"PKS Sanggau", kapasitas:40, terpakai:36, lokasi:"Sanggau, Kalbar"},
+  {nama:"PKS Kotim", kapasitas:80, terpakai:62, lokasi:"Kotim, Kalteng"},
+];
+
+const PETANI = [
+  {nama:"Sutrisno", kop:"Koperasi Maju Tani", blok:"BKS-01", luas:4.2, status:"Plasma"},
+  {nama:"Rosmawati", kop:"KUD Tapung Jaya", blok:"BKS-02", luas:2.8, status:"Plasma"},
+  {nama:"Bambang Prasetyo", kop:"Koperasi Cenaku", blok:"BKS-03", luas:6.5, status:"Swadaya"},
+  {nama:"Yusuf Hamid", kop:"Kelompok Tani Lesung", blok:"BKS-04", luas:1.9, status:"Swadaya"},
+  {nama:"Aisyah Nur", kop:"KUD Bungo Sejahtera", blok:"BKS-05", luas:3.4, status:"Plasma"},
+  {nama:"Joko Santoso", kop:"Koperasi Tebo Mandiri", blok:"BKS-06", luas:5.1, status:"Plasma"},
+  {nama:"Mariana", kop:"KUD Sanggau Lestari", blok:"BKS-09", luas:7.3, status:"Swadaya"},
+  {nama:"Hendra Wijaya", kop:"Koperasi Kotim Jaya", blok:"BKS-10", luas:9.8, status:"Plasma"},
+  {nama:"Siti Rahma", kop:"Kelompok Seruyan", blok:"BKS-11", luas:3.0, status:"Swadaya"},
+];
+
+const LEDGER = [
+  {hash:"0xSW-4f81a2", ev:"TBS_SETTLED", ent:"BKS-09 · Sanggau", node:"PKS Sanggau", t:"2 mnt lalu", st:"COMMITTED"},
+  {hash:"0xSW-9b2e77", ev:"WEIGH_VERIFIED", ent:"BKS-01 · Sungai Apit", node:"PKS Siak", t:"18 mnt lalu", st:"COMMITTED"},
+  {hash:"0xSW-1a7d33", ev:"HARVEST_LOGGED", ent:"BKS-10 · Kotim", node:"PKS Kotim", t:"46 mnt lalu", st:"COMMITTED"},
+  {hash:"0xSW-7c02be", ev:"QUALITY_AUDIT", ent:"BKS-05 · Muara Bungo", node:"Lab Bungo", t:"2 j lalu", st:"PENDING"},
+  {hash:"0xSW-3d91ff", ev:"FLEET_DISPATCH", ent:"BM 8841 SA", node:"PKS Siak", t:"3 j lalu", st:"COMMITTED"},
+  {hash:"0xSW-8e44c1", ev:"PRICE_ANCHOR", ent:"Riau · Rp2.540/kg", node:"Disbun", t:"5 j lalu", st:"COMMITTED"},
+];
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const badge = (txt, cls) => `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${cls}">${txt}</span>`;
+const ST = {
+  Panen:      ["text-gold-400 border-gold-500/40 bg-gold-500/10", "Siap panen"],
+  Produktif:  ["text-palm-400 border-palm-600/40 bg-palm-600/10", "Produktif"],
+  Perawatan:  ["text-sky-300 border-sky-500/40 bg-sky-500/10", "Perawatan"],
+  Replanting: ["text-slate-300 border-slate-500/40 bg-slate-500/10", "Replanting"],
+  Jalan:      ["text-palm-400 border-palm-600/40 bg-palm-600/10", "Jalan"],
+  Bongkar:    ["text-gold-400 border-gold-500/40 bg-gold-500/10", "Bongkar"],
+};
+const statBadge = s => badge(s, ST[s]?.[0] || "text-slate-300 border-slate-600 bg-slate-700/20");
+
+/* ---------- KPI ---------- */
+const totalLuas = BLOK.reduce((a,b)=>a+b.luas,0);
+const totalProduksi = PRODUKSI.at(-1);
+const avgHarga = Math.round(HARGA.reduce((a,b)=>a+b.harga,0)/HARGA.length);
+$("kpis").innerHTML = [
+  {l:"Total luas kebun", v:num(totalLuas), u:"ha", d:"12 blok · 4 provinsi", c:"text-palm-400"},
+  {l:"Produksi TBS", v:num(totalProduksi), u:"ton/bln", d:"+8,4% vs tahun lalu", c:"text-gold-400"},
+  {l:"Harga TBS rata-rata", v:rp(avgHarga), u:"/kg", d:"+2,1% minggu ini", c:"text-palm-400"},
+  {l:"Petani mitra", v:"1.284", u:"orang", d:"98% terverifikasi KTP", c:"text-sky-300"},
+].map(k=>`
+  <div class="card card-hover p-4">
+    <div class="text-[11px] font-semibold text-slate-500">${k.l}</div>
+    <div class="mt-1.5 flex items-baseline gap-1">
+      <span class="text-xl sm:text-2xl font-extrabold ${k.c}">${k.v}</span>
+      <span class="text-[10px] text-slate-500">${k.u}</span>
+    </div>
+    <div class="mt-1 text-[10px] text-slate-500">${k.d}</div>
+  </div>`).join("");
+
+/* ---------- charts (inline SVG) ---------- */
+function areaChart(data, {w=640, h=180, color="#4ade80", labels=true, fmt=v=>num(v)}={}){
+  const pad = {t:14,r:8,b:labels?22:8,l:8};
+  const max = Math.max(...data)*1.12, min = Math.min(...data)*0.9;
+  const iw = w-pad.l-pad.r, ih = h-pad.t-pad.b;
+  const x = i => pad.l + (iw * i/(data.length-1));
+  const y = v => pad.t + ih - ((v-min)/(max-min||1))*ih;
+  const pts = data.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const grid = [0,.25,.5,.75,1].map(f=>{
+    const yy = pad.t + ih*f;
+    return `<line x1="${pad.l}" y1="${yy}" x2="${w-pad.r}" y2="${yy}" stroke="#1b2a22" stroke-width="1"/>`;
+  }).join("");
+  const lbl = labels ? BULAN.map((m,i)=>`<text x="${x(i)}" y="${h-4}" fill="#5b6f63" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">${m}</text>`).join("") : "";
+  const dots = data.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="${color}"/>`).join("");
+  const peak = data.indexOf(Math.max(...data));
+  return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto" role="img" aria-label="grafik tren">
+    <defs><linearGradient id="g${color.replace('#','')}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity=".28"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${grid}
+    <polygon points="${pad.l},${pad.t+ih} ${pts} ${w-pad.r},${pad.t+ih}" fill="url(#g${color.replace('#','')})"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+    <circle cx="${x(peak)}" cy="${y(data[peak])}" r="4" fill="none" stroke="${color}" stroke-width="1.5" opacity=".6"/>
+    <text x="${x(peak)}" y="${y(data[peak])-9}" fill="${color}" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">${fmt(data[peak])}</text>
+    ${lbl}
+  </svg>`;
+}
+
+function barChart(data, {w=640,h=180,color="#f59e0b"}={}){
+  const pad={t:16,r:8,b:22,l:8}, iw=w-pad.l-pad.r, ih=h-pad.t-pad.b;
+  const max = Math.max(...data)*1.1;
+  const bw = iw/data.length*0.55, gap = iw/data.length;
+  return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto" role="img" aria-label="grafik produksi">
+    ${[0,.25,.5,.75,1].map(f=>`<line x1="${pad.l}" y1="${pad.t+ih*f}" x2="${w-pad.r}" y2="${pad.t+ih*f}" stroke="#1b2a22"/>`).join("")}
+    ${data.map((v,i)=>{
+      const bh=(v/max)*ih, xx=pad.l+gap*i+(gap-bw)/2, yy=pad.t+ih-bh;
+      return `<rect x="${xx}" y="${yy}" width="${bw}" height="${bh}" rx="3" fill="${i===data.length-1?color:'#2f4a3b'}"/>
+        ${i%2===0?`<text x="${xx+bw/2}" y="${h-4}" fill="#5b6f63" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">${BULAN[i]}</text>`:''}`;
+    }).join("")}
+  </svg>`;
+}
+
+$("chartProduksi").innerHTML = areaChart(PRODUKSI, {color:"#4ade80"});
+$("chartHarga").innerHTML = areaChart(HARGA_TREN, {color:"#fbbf24", fmt:v=>"Rp"+num(v)});
+$("chartRendemen").innerHTML = barChart(PRODUKSI, {color:"#fbbf24"});
+
+/* ---------- status blok ---------- */
+const counts = {};
+BLOK.forEach(b=>counts[b.status]=(counts[b.status]||0)+1);
+$("statusList").innerHTML = Object.entries(counts).map(([k,v])=>{
+  const pct = Math.round(v/BLOK.length*100);
+  const col = {Panen:"bg-gold-500",Produktif:"bg-palm-500",Perawatan:"bg-sky-400",Replanting:"bg-slate-500"}[k];
+  return `<div>
+    <div class="flex items-center justify-between text-[11px] font-semibold"><span class="text-slate-300">${ST[k]?.[1]||k}</span><span class="text-slate-500 mono">${v} blok · ${pct}%</span></div>
+    <div class="mt-1 h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${col} rounded-full" style="width:${pct}%"></div></div>
+  </div>`;
+}).join("");
+
+/* ---------- tugas ---------- */
+$("tugasList").innerHTML = TUGAS.map((t,i)=>`
+  <li class="flex items-start gap-2.5">
+    <span class="mt-0.5 w-4 h-4 rounded border ${t.done?'bg-palm-600 border-palm-600 text-ink-950':'border-[#2a4034]'} grid place-items-center text-[9px] font-bold">${t.done?'✓':''}</span>
+    <span class="min-w-0">
+      <span class="block text-xs font-semibold ${t.done?'text-slate-500 line-through':'text-slate-200'}">${t.t}</span>
+      <span class="block text-[10px] text-slate-500">${t.d}</span>
+    </span>
+  </li>`).join("");
+$("tugasProgress").textContent = TUGAS.filter(t=>t.done).length + " / " + TUGAS.length + " selesai";
+
+/* ---------- harga mini + tabel ---------- */
+$("hargaMini").innerHTML = HARGA.slice(0,4).map(h=>`
+  <div class="flex items-center justify-between text-xs">
+    <span class="text-slate-300">${h.prov}</span>
+    <span class="flex items-center gap-2">
+      <span class="mono font-bold">${rp(h.harga)}</span>
+      <span class="text-[10px] font-bold ${h.delta>=0?'text-palm-400':'text-red-400'}">${h.delta>=0?'▲':'▼'} ${Math.abs(h.delta)}%</span>
+    </span>
+  </div>`).join("");
+
+$("hargaStats").innerHTML = [
+  {l:"Rata-rata nasional", v:rp(avgHarga), d:"+2,1% bulan ini"},
+  {l:"Tertinggi", v:rp(Math.max(...HARGA.map(h=>h.harga))), d:"Sumatera Barat"},
+  {l:"Terendah", v:rp(Math.min(...HARGA.map(h=>h.harga))), d:"Kalimantan Tengah"},
+].map(s=>`<div class="card p-4"><div class="text-[11px] text-slate-500 font-semibold">${s.l}</div><div class="mt-1 text-xl font-extrabold text-gold-400">${s.v}</div><div class="text-[10px] text-slate-500 mt-0.5">${s.d}</div></div>`).join("");
+
+$("hargaTable").innerHTML = HARGA.map(h=>{
+  const pct = Math.min(100, Math.round(h.harga/h.plafon*100));
+  return `<tr class="hover:bg-ink-850/60">
+    <td class="px-4 py-3 font-semibold">${h.prov}</td>
+    <td class="px-4 py-3 text-right mono font-bold text-gold-400">${rp(h.harga)}</td>
+    <td class="px-4 py-3 text-right mono text-slate-500">${rp(h.plafon)}</td>
+    <td class="px-4 py-3 text-right text-[11px] font-bold ${h.delta>=0?'text-palm-400':'text-red-400'}">${h.delta>=0?'+':''}${h.delta}%</td>
+    <td class="px-4 py-3"><div class="h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${pct>95?'bg-red-500':pct>88?'bg-gold-500':'bg-palm-500'}" style="width:${pct}%"></div></div><div class="text-[10px] text-slate-500 mt-1 mono">${pct}% plafon</div></td>
+  </tr>`;
+}).join("");
+
+/* ---------- produksi ---------- */
+$("prodStats").innerHTML = [
+  {l:"Produksi bulan ini", v:num(totalProduksi)+" ton", d:"dari 12 blok aktif"},
+  {l:"Rendemen CPO", v:RENDEMEN.at(-1)+"%", d:"+1,2 poin YoY"},
+  {l:"Rata-rata per blok", v:num(Math.round(totalProduksi/BLOK.filter(b=>b.produksi>0).length))+" ton", d:"per bulan"},
+].map(s=>`<div class="card p-4"><div class="text-[11px] text-slate-500 font-semibold">${s.l}</div><div class="mt-1 text-xl font-extrabold text-palm-400">${s.v}</div><div class="text-[10px] text-slate-500 mt-0.5">${s.d}</div></div>`).join("");
+
+$("panenTable").innerHTML = PANEN.map(p=>{
+  const cls = p.status==="Terverifikasi" ? "text-palm-400 border-palm-600/40 bg-palm-600/10" : p.status==="Menunggu audit" ? "text-gold-400 border-gold-500/40 bg-gold-500/10" : "text-red-300 border-red-500/40 bg-red-500/10";
+  return `<tr class="hover:bg-ink-850/60">
+    <td class="px-4 py-3 font-semibold text-slate-200">${p.blok}</td>
+    <td class="px-4 py-3 text-slate-400">${p.tgl}</td>
+    <td class="px-4 py-3 text-right mono">${p.ton} t</td>
+    <td class="px-4 py-3 text-right mono text-slate-400">${num(p.janjang)}</td>
+    <td class="px-4 py-3 text-right mono text-gold-400">${p.rend}%</td>
+    <td class="px-4 py-3">${badge(p.status, cls)}</td>
+  </tr>`;
+}).join("");
+
+/* ---------- armada ---------- */
+const armadaJalan = ARMADA.filter(a=>a.status==="Jalan").length;
+$("armadaStats").innerHTML = [
+  {l:"Truk aktif", v:armadaJalan+"/"+ARMADA.length, d:"di jalan"},
+  {l:"Muatan total", v:num(ARMADA.reduce((a,b)=>a+b.muatan,0))+" t", d:"menuju PKS"},
+  {l:"PKS beroperasi", v:PKS.length, d:"4 provinsi"},
+  {l:"Utilisasi PKS", v:Math.round(PKS.reduce((a,p)=>a+p.terpakai/p.kapasitas,0)/PKS.length*100)+"%", d:"rata-rata"},
+].map(s=>`<div class="card p-4"><div class="text-[11px] text-slate-500 font-semibold">${s.l}</div><div class="mt-1 text-lg font-extrabold text-palm-400">${s.v}</div><div class="text-[10px] text-slate-500 mt-0.5">${s.d}</div></div>`).join("");
+
+$("armadaTable").innerHTML = ARMADA.map(a=>`
+  <tr class="hover:bg-ink-850/60">
+    <td class="px-4 py-3 font-semibold mono text-xs">${a.truk}</td>
+    <td class="px-4 py-3 text-slate-400 text-xs">${a.rute}</td>
+    <td class="px-4 py-3 text-right mono">${a.muatan? a.muatan+" t" : "—"}</td>
+    <td class="px-4 py-3 text-right text-xs text-slate-400">${a.eta}</td>
+    <td class="px-4 py-3">${statBadge(a.status)}</td>
+  </tr>`).join("");
+
+$("pksGrid").innerHTML = PKS.map(p=>{
+  const pct = Math.round(p.terpakai/p.kapasitas*100);
+  return `<div class="card p-4">
+    <div class="flex items-start justify-between">
+      <div><div class="font-bold text-sm">${p.nama}</div><div class="text-[11px] text-slate-500">${p.lokasi}</div></div>
+      <span class="text-[10px] font-bold ${pct>85?'text-red-300':pct>70?'text-gold-400':'text-palm-400'} mono">${pct}%</span>
+    </div>
+    <div class="mt-3 h-1.5 rounded-full bg-ink-700 overflow-hidden"><div class="h-full ${pct>85?'bg-red-500':pct>70?'bg-gold-500':'bg-palm-500'}" style="width:${pct}%"></div></div>
+    <div class="mt-1.5 text-[10px] text-slate-500 mono">${p.terpakai} / ${p.kapasitas} ton/jam</div>
+  </div>`;
+}).join("");
+
+/* ---------- petani ---------- */
+function renderPetani(q=""){
+  const list = PETANI.filter(p=>(p.nama+" "+p.kop+" "+p.blok).toLowerCase().includes(q.toLowerCase()));
+  $("petaniGrid").innerHTML = list.length ? list.map(p=>`
+    <div class="card card-hover p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-ink-700 border border-[#2a4034] grid place-items-center font-extrabold text-palm-400">${p.nama.charAt(0)}</div>
+        <div class="min-w-0">
+          <div class="font-bold text-sm truncate">${p.nama}</div>
+          <div class="text-[11px] text-slate-500 truncate">${p.kop}</div>
+        </div>
+      </div>
+      <div class="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+        <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Lahan</div><div class="font-bold mono">${p.luas} ha</div></div>
+        <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Blok</div><div class="font-bold mono">${p.blok}</div></div>
+      </div>
+      <div class="mt-3">${badge(p.status, p.status==="Plasma" ? "text-palm-400 border-palm-600/40 bg-palm-600/10" : "text-sky-300 border-sky-500/40 bg-sky-500/10")}</div>
+    </div>`).join("") : `<div class="col-span-full text-center py-12 text-slate-500 text-sm">Petani tidak ditemukan.</div>`;
+}
+renderPetani();
+$("cariPetani").addEventListener("input", e=>renderPetani(e.target.value));
+
+/* ---------- ledger ---------- */
+$("chain").innerHTML = [
+  {l:"Blok tercatat", v:"18.402"},
+  {l:"Node aktif", v:"24"},
+  {l:"Audit terbuka", v:"1"},
+].map(c=>`<div class="bg-ink-850 rounded-xl p-3 border border-[#1b2a22]"><div class="text-[11px] text-slate-500">${c.l}</div><div class="text-lg font-extrabold mono text-palm-400">${c.v}</div></div>`).join("");
+
+$("ledgerTable").innerHTML = LEDGER.map(b=>`
+  <tr class="hover:bg-ink-850/60">
+    <td class="px-4 py-3 mono text-[11px] text-palm-400">${b.hash}</td>
+    <td class="px-4 py-3 text-[11px] font-semibold">${b.ev}</td>
+    <td class="px-4 py-3 text-[11px] text-slate-400">${b.ent}</td>
+    <td class="px-4 py-3 text-[11px] text-slate-400">${b.node}</td>
+    <td class="px-4 py-3 text-[11px] text-slate-500">${b.t}</td>
+    <td class="px-4 py-3">${badge(b.st, b.st==="COMMITTED" ? "text-palm-400 border-palm-600/40 bg-palm-600/10" : "text-gold-400 border-gold-500/40 bg-gold-500/10")}</td>
+  </tr>`).join("");
+
+/* ---------- peta ---------- */
+let map, markers = [];
+function initMap(){
+  if(map) return;
+  map = L.map("map", {scrollWheelZoom:false, attributionControl:true}).setView([-1.1, 108.5], 4);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+  }).addTo(map);
+  BLOK.forEach(b=>{
+    const color = {Panen:"#f59e0b", Produktif:"#4ade80", Perawatan:"#38bdf8", Replanting:"#94a3b8"}[b.status];
+    const m = L.circleMarker([b.lat,b.lng], {radius: 8 + b.luas/500, color, fillColor: color, fillOpacity:.35, weight:2})
+      .addTo(map)
+      .bindPopup(`<div class="text-xs leading-relaxed"><b>${b.id} · ${b.nama}</b><br>${b.kab}<br>Luas ${num(b.luas)} ha · ${b.umur} th<br>Status: <b>${ST[b.status]?.[1]||b.status}</b><br>Produksi ${b.produksi} ton/bln</div>`);
+    m._blok = b;
+    markers.push(m);
+  });
+  $("mapLegend").innerHTML = Object.entries(ST).slice(0,4).map(([k,v])=>`
+    <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 bg-ink-850 border border-[#1b2a22] px-2.5 py-1 rounded-lg">
+      <span class="w-2 h-2 rounded-full" style="background:${{Panen:"#f59e0b",Produktif:"#4ade80",Perawatan:"#38bdf8",Replanting:"#94a3b8"}[k]}"></span>${v[1]}
+    </span>`).join("");
+  setTimeout(()=>map.invalidateSize(), 200);
+}
+function mapFilter(status){
+  if(!map) return;
+  markers.forEach(m=>{
+    const ok = !status || m._blok.status===status;
+    if(ok && !map.hasLayer(m)) m.addTo(map);
+    if(!ok && map.hasLayer(m)) map.removeLayer(m);
+  });
+}
+$("blokGrid").innerHTML = BLOK.map(b=>`
+  <div class="card card-hover p-4">
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0">
+        <div class="text-[10px] mono text-slate-500">${b.id}</div>
+        <div class="font-bold text-sm truncate">${b.nama}</div>
+        <div class="text-[11px] text-slate-500 truncate">${b.kab}</div>
+      </div>
+      ${statBadge(b.status)}
+    </div>
+    <div class="mt-3 grid grid-cols-3 gap-1.5 text-[11px]">
+      <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Luas</div><div class="font-bold mono">${num(b.luas)}</div></div>
+      <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">Umur</div><div class="font-bold mono">${b.umur} th</div></div>
+      <div class="bg-ink-850 rounded-lg p-2"><div class="text-slate-500">TBS</div><div class="font-bold mono">${b.produksi} t</div></div>
+    </div>
+  </div>`).join("");
+
+/* ---------- tabs ---------- */
+const TITLES = {
+  dashboard:"Dashboard Operasional", peta:"Peta Kebun", produksi:"Produksi & Panen",
+  harga:"Harga TBS", armada:"Armada & PKS", petani:"Petani Mitra", ledger:"Traceability"
+};
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active", t.id==="tab-"+name));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  $("pageTitle").textContent = TITLES[name] || "Dashboard";
+  if(name==="peta") initMap();
+  if(location.hash.slice(1)!==name) history.replaceState(null,"","#"+name);
+  window.scrollTo({top:0, behavior:"smooth"});
+  if(window.innerWidth<1024) closeSidebar();
+}
+document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click", ()=>switchTab(b.dataset.tab)));
+
+function toggleSidebar(){
+  const s = $("sidebar"), o = $("overlay");
+  const open = s.classList.contains("-translate-x-full");
+  s.classList.toggle("-translate-x-full", !open);
+  o.classList.toggle("hidden", !open);
+}
+function closeSidebar(){
+  $("sidebar").classList.add("-translate-x-full");
+  $("overlay").classList.add("hidden");
+}
+
+/* ---------- clock ---------- */
+function tick(){
+  const d = new Date();
+  $("clock").textContent = d.toLocaleTimeString("id-ID",{hour12:false}) + " WIB";
+}
+tick(); setInterval(tick, 1000);
+
+/* init */
+const start = location.hash.slice(1);
+switchTab(TITLES[start] ? start : "dashboard");
+</script>
+</body>
+</html>
